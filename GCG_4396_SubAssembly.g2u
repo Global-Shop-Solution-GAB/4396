@@ -1,0 +1,1466 @@
+Program.Sub.ScreenSU.Start
+Gui.F_Prog..Create
+Gui.F_Prog..Size(4455,1785)
+Gui.F_Prog..MinX(0)
+Gui.F_Prog..MinY(0)
+Gui.F_Prog..Position(0,0)
+Gui.F_Prog..BackColor(-2147483633)
+Gui.F_Prog..MousePointer(0)
+Gui.F_Prog..Caption("Work Order Generator Progress")
+Gui.F_Prog..ControlBox(False)
+Gui.F_Prog.progressBarMain.Create(ProgressBar)
+Gui.F_Prog.progressBarMain.Size(3735,255)
+Gui.F_Prog.progressBarMain.Position(195,450)
+Gui.F_Prog.lblMain.Create(Label,"Process",True,3720,255,0,195,210,True,0,"Arial",8,-2147483633,0)
+Gui.F_Prog.lblSec.Create(Label,"Label",True,3720,255,0,195,870,True,0,"Arial",8,-2147483633,0)
+Gui.Form..Create
+Gui.Form..Size(15360,10695)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.txtMsg.Create(TextBoxR)
+Gui.Form.txtMsg.Size(14580,9765)
+Gui.Form.txtMsg.Position(270,165)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+v.Global.sWorkOrder.Declare
+V.Global.sSuffix.Declare
+V.Global.sParentPart.Declare
+V.Global.sWorkOrderMain.Declare
+V.Global.sSuffixMain.Declare
+v.Global.fParentQty.Declare(float)
+
+v.Global.sDate.Declare
+V.Global.sTime.Declare
+V.Global.sBarCode_WOsPath.Declare
+V.Global.sWOsPrintedDir.Declare
+V.Global.sWOtoPrintPath.Declare
+V.Global.sFromParentToGrandChildPDF.Declare
+V.Global.sParams.Declare
+V.Global.sParamValues.Declare
+V.Global.sCallParam.Declare
+
+v.Global.bMatl.Declare
+V.Global.bComment.Declare
+V.Global.bOut.Declare
+v.Global.iParentWOorder.Declare(long)
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+
+'BN May 12, 2017
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare
+V.Local.sPart.Declare
+V.Local.sRev.Declare
+V.Local.sLoc.Declare
+V.Local.sParam.Declare
+V.Local.sOrder.Declare
+V.Local.sRet.Declare
+V.Local.sRetReschedule.Declare
+V.Local.sSql.Declare
+V.Local.sSuff.Declare
+V.Local.sLine.Declare
+V.Local.sDate.Declare
+V.Local.sFlag.Declare
+V.Local.sFlagReschedule.Declare
+V.Local.sFlagPrintReport.Declare
+V.Local.sParamSchedule.Declare
+V.Local.sWOChild.Declare
+V.Local.sWOChild6.Declare
+V.Local.sWOChild3.Declare
+V.Local.sDateStartWOChild.Declare
+V.Local.sSeqChild.Declare
+V.Local.sHold.Declare
+V.Local.sParentRunTimeQty.Declare
+
+v.Local.sWOGrandChild.Declare
+V.Local.sWOGrandChild6.Declare
+V.Local.sWOGrandChild3.Declare
+V.Local.sDateStartWOGrandChild.Declare
+V.Local.sSeqGrandChild.Declare
+V.Local.sDate_org_due_P.Declare
+V.Local.sDate_org_due_C.Declare
+V.Local.sDate_org_due_gc.Declare
+
+v.Local.fQty.Declare(Float)
+v.Local.iCounter.Declare(Long)
+v.Local.dDateHold.Declare(date)
+
+F.ODBC.Connection!conx.OpenConnection(v.Ambient.PDSN, v.Ambient.PUser, v.Ambient.PPass,300)
+'This was inintially planned to run off of the Script 1 button, but it wont properly until they save the line. Because of how globalshop handles saving sales order lines, this could be tedious,
+'so I changed it to run off the post save hook
+'F.Intrinsic.Control.If(v.Caller.Hook, =, "12410")'=> this hook  is for Script 1 button, but we will no longer use it
+
+'Populate hook
+f.Intrinsic.Control.If(v.Caller.Hook,=, "12010")
+	F.Intrinsic.UI.ChangeCallerProperty(v.Passed.000061,"LOCK",1)	
+	f.Intrinsic.Control.CallSub(unload)
+f.Intrinsic.Control.EndIf
+
+'putting it in the post-save-hook
+F.Intrinsic.Control.If(V.Caller.Hook, =, "12231")
+
+	'Pull the information for the sales order
+	v.Local.sPart.Set(v.Passed.000052)
+	v.Global.sParentPart.Set(v.Passed.000052)
+	v.Local.sRev.Set(v.Passed.000053)
+	v.Local.sLoc.Set(v.Passed.000054)
+	v.Local.fQty.Set(v.Passed.000007)
+	v.Global.fParentQty.Set(v.Passed.000007)
+	v.Local.sOrder.Set(v.Passed.000060)
+	V.Local.sLine.Set(V.Passed.000051)	
+	F.Intrinsic.String.LPad(v.Local.sOrder, "0", 7, v.Local.sOrder)
+	F.Intrinsic.String.LPad(V.Local.sLine, "0", 3, V.Local.sLine)
+	F.Intrinsic.String.RPad(V.Local.sLine, "0", 4, V.Local.sLine)
+	
+	v.Local.sHold.Set(v.Passed.000011)
+	F.Intrinsic.String.Right(v.Local.sHold.Trim, 4, V.Local.sDate)
+	F.Intrinsic.String.mid(v.Local.sHold, 3, 2, v.Local.sHold)
+	F.Intrinsic.String.Build("{0}{1}", V.Local.sDate, v.Local.sHold, V.Local.sDate)		
+
+	'we should check to see if there is a work order already
+	F.Intrinsic.String.Build("Select * from ORDER_TO_WO where ORDER_NO = '{0}' and ORDER_LINE = '{1}' ", V.Local.sOrder, V.Local.sLine, V.Local.sSql)
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql, V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet.Trim, <>, "")
+		'======================================================================This part is for when Work Orders were already created, we will ask user to reschedule? ask user to print work orders? ==================
+		F.Intrinsic.UI.Msgbox("Work Order for this Sales Order Line already created.", "Work Orders created")
+		F.Intrinsic.UI.Msgbox("Would you like to reschedule for this sales order line?", "Work Orders Rechedule", 4, V.Local.sFlagReschedule)
+	
+		F.Intrinsic.Control.If(V.Local.sFlagReschedule,=, 7)
+			'Ask if users want to print Work Orkders here
+			F.Intrinsic.UI.Msgbox("Would you like to print Work Orders?", "Print Work Orders", 4, V.Local.sFlagPrintReport)
+			f.Intrinsic.Control.If(v.Local.sFlagPrintReport,=,7)			
+				f.Intrinsic.Control.CallSub(unload)			
+			f.Intrinsic.Control.Else
+				f.Intrinsic.Control.CallSub(printreports)
+				f.Intrinsic.Control.CallSub(unload)
+			f.Intrinsic.Control.Endif		
+		F.Intrinsic.Control.EndIf
+
+		'=====Start ReSchedule process=======================		
+		'Level 0
+		Gui.F_Prog.progressBarMain.Max(10)	
+		Gui.F_Prog.lblSec.Text("...rescheduling Level 0")
+		Gui.F_Prog.progressBarMain.Value(1)	
+		Gui.F_Prog..Show
+		
+		'Get the Work Order number generated from ORDER_TO_WO table
+		F.Intrinsic.String.Build("Select JOB, SUFFIX, DATE_JOB_DUE from ORDER_TO_WO where ORDER_NO = '{0}' and RTRIM(ORDER_LINE) = '{1}' ", V.Local.sOrder, V.Local.sLine, V.Local.sSql)
+		F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql, V.Local.sRetReschedule)
+		F.Intrinsic.Control.If(V.Local.sRetReschedule.Trim, =, "")
+			F.Intrinsic.UI.Msgbox("WO was not created.")			
+			F.Intrinsic.Control.CallSub(unload)
+		F.Intrinsic.Control.EndIf		
+		
+		F.Intrinsic.String.Split(V.Local.sRetReschedule, "*!*", V.Local.sRetReschedule)
+		V.Global.sWorkOrder.Set(V.Local.sRetReschedule(0))
+		V.Global.sSuffix.Set(V.Local.sRetReschedule(1))
+		v.Global.sWorkOrderMain.Set(v.Global.sWorkOrder)
+		v.Global.sSuffixMain.Set(v.Global.sSuffix)
+		
+		v.Local.sHold.Set(v.Passed.000011)
+		F.Intrinsic.String.Right(v.Local.sHold.Trim, 4, V.Local.sDate)
+		F.Intrinsic.String.mid(v.Local.sHold, 3, 2, v.Local.sHold)
+		F.Intrinsic.String.Build("{0}{1}", V.Local.sDate, v.Local.sHold, V.Local.sDate)	
+		
+		'Get the Date_Org_due
+		f.Intrinsic.String.Build("Select Date_Orig_Due from Job_Header where job = '{0}' and suffix = '{1}'", v.Global.sWorkOrderMain, v.Global.sSuffixMain, v.Local.sSql)
+		F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+		F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+			v.Local.sDate_org_due_P.set(v.ODBC.conx!rst.FieldValTrim!Date_Orig_Due)	
+		f.Intrinsic.Control.EndIf
+		f.ODBC.conx!rst.Close				
+			
+		'Schedule Work Order using callwrapper mode 500030, for schedule later at the end of Main
+		F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", V.Local.sDate, v.Global.sWorkOrderMain, v.Global.sSuffixMain, V.Local.sParamSchedule)
+		F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)
+		
+		'Update new Date_due to parent Job_header
+		f.Intrinsic.String.Build("update job_header set date_due = '{0}' where job='{1}' and suffix = '{2}'",v.Local.sDate,v.Global.sWorkOrderMain, v.Global.sSuffixMain, v.Local.sSql)
+		f.ODBC.Connection!conx.Execute(v.Local.sSql)
+		
+		'Update Date_org_Due to parent Job_header
+		f.Intrinsic.String.Build("update job_header set Date_Orig_Due = '{0}' where job='{1}' and suffix = '{2}'",v.Local.sDate_org_due_P,v.Global.sWorkOrderMain, v.Global.sSuffixMain, v.Local.sSql)
+		f.ODBC.Connection!conx.Execute(v.Local.sSql)
+
+		'Update X Line Date_Start and Date_Due		
+		F.Intrinsic.String.Build("select Seq from V_Job_Operations where job = '{0}' and suffix = '{1}' and LMO = 'X' ",v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sSql)
+		F.Data.DataTable.CreateFromSQL("WO_0_Level_X_Line", "conx", V.Local.sSql, True)	
+		
+		v.Local.sNewDateXLine.Declare(string)
+		f.Intrinsic.Control.For(v.Local.iCounter,0,v.DataTable.WO_0_Level_X_Line.RowCount--,1)
+
+			f.Intrinsic.String.Build("select Date_Due from V_Job_Operations where job = '{0}' and suffix = '{1}' and Seq = (Select max(Seq) from V_Job_Operations where job = '{0}' and suffix = '{1}' and Seq < '{2}')",v.Global.sWorkOrderMain,v.Global.sSuffixMain,Variable.DataTable.WO_0_Level_X_Line(v.Local.iCounter).Seq!FieldValString,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+				Function.Intrinsic.Date.Dateadd ("D",1,v.ODBC.conx!rst.FieldValTrim!Date_Due, v.Local.dDateHold)		
+				F.Intrinsic.String.Format(v.Local.dDateHold,"MMDDYY",v.Local.sNewDateXLine)	
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+			
+			f.Intrinsic.String.Build("Update Job_Operations set Date_Start = '{0}', Date_Due = '{0}' where job = '{1}' and suffix = '{2}' and Seq = '{3}'", v.Local.sNewDateXLine,v.Global.sWorkOrderMain,v.Global.sSuffixMain,Variable.DataTable.WO_0_Level_X_Line(v.Local.iCounter).Seq!FieldValString,v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)			
+		f.Intrinsic.Control.Next(v.Local.iCounter)
+
+			
+		'Level 1		
+		Gui.F_Prog.progressBarMain.Value(4)
+		Gui.F_Prog.lblSec.Text("...rescheduling Work Orders for level 1")
+		
+		F.Intrinsic.String.Build("select Part, Date_Start, Seq from V_Job_Operations where job = '{0}' and suffix = '{1}' and LMO = 'X' and left(Part,6) = '{0}'",v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sSql)
+		F.Data.DataTable.CreateFromSQL("WO_Level_Child", "conx", V.Local.sSql, True)
+		
+		v.Local.sDateHeaderRescheduled.Declare(string)
+		f.Intrinsic.Control.For(v.Local.iCounter,0, v.DataTable.WO_Level_Child.Rowcount--,1)
+			
+			v.Local.sWOChild.Set(Variable.DataTable.WO_Level_Child(v.Local.iCounter).Part!FieldValString)
+			f.Intrinsic.String.Left(v.Local.sWOChild.Trim,6,v.Local.sWOChild6)
+			f.Intrinsic.String.Right(v.Local.sWOChild.Trim,3,v.Local.sWOChild3)		
+				
+			v.Local.sSeqChild.Set(Variable.DataTable.WO_Level_Child(v.Local.iCounter).Seq!FieldValString)
+'			f.Intrinsic.String.Left(v.Local.sSeqChild.Trim,4,v.Local.sSeqChild)
+'			f.Intrinsic.String.RPad(v.Local.sSeqChild,"0",6,v.Local.sSeqChild)
+			f.Intrinsic.String.Build("Select Top 1 Date_Start, Date_Due from V_Job_Operations where job = '{0}' and suffix = '{1}' and seq < '{2}' and LMO = 'M' order by Seq desc", v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sSeqChild,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+				F.Intrinsic.String.Format(v.ODBC.conx!rst.FieldValTrim!Date_Due,"MMDDYY",v.Local.sDateHeaderRescheduled)	
+				Function.Intrinsic.Date.Dateadd ("D",1,v.ODBC.conx!rst.FieldValTrim!Date_Due, v.Local.dDateHold)		
+				F.Intrinsic.String.Format(v.Local.dDateHold,"MMDDYY",v.Local.sDate)	
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+		
+			'Get the Date_Org_due of Child
+			f.Intrinsic.String.Build("Select Date_Orig_Due from Job_Header where job = '{0}' and suffix = '{1}'", v.Local.sWOChild6, v.Local.sWOChild3, v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+				v.Local.sDate_org_due_C.set(v.ODBC.conx!rst.FieldValTrim!Date_Orig_Due)	
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+			
+			F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", v.Local.sDate, v.Local.sWOChild6, v.Local.sWOChild3, V.Local.sParamSchedule)
+			F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)		
+			
+			'Update new Date_due to child Job_header
+			f.Intrinsic.String.Build("update job_header set date_due = '{0}' where job= '{1}' and suffix = '{2}'",v.Local.sDateHeaderRescheduled, v.Local.sWOChild6, v.Local.sWOChild3, v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+						
+			'Update Date_org_Due to child Job_header
+			f.Intrinsic.String.Build("update job_header set Date_Orig_Due = '{0}' where job='{1}' and suffix = '{2}'",v.Local.sDate_org_due_C,v.Local.sWOChild6, v.Local.sWOChild3, v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			
+			
+		f.Intrinsic.Control.Next(v.Local.iCounter)		
+
+		'Level 2
+		Gui.F_Prog.progressBarMain.Value(7)
+		f.Intrinsic.String.Build("Select min(right(rtrim(part),3)) as MinSuffix, max(right(rtrim(part),3)) as MaxSuffix from v_job_operations where job = '{0}' and suffix = '{1}' and LMO = 'X'",v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sSql)
+		v.Local..BulkDeclareString(sMaxSuffix, sMinSuffix)
+		F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+				v.Local.sMinSuffix.Set(v.ODBC.conx!rst.FieldValTrim!MinSuffix)
+				v.Local.sMaxSuffix.Set(v.ODBC.conx!rst.FieldValTrim!MaxSuffix)						
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+		
+		
+		Gui.F_Prog.lblSec.Text("...scheduling Work Orders for sub-assemblies level 2")
+		F.Intrinsic.String.Build("select job, suffix, Part, Date_Start, Seq from V_Job_Operations where job = '{0}' and suffix between '{1}' and '{2}' and LMO = 'X' and left(Part,6) = '{0}'",v.Global.sWorkOrderMain,v.Local.sMinSuffix,v.Local.sMaxSuffix,v.Local.sSql)
+		F.Data.DataTable.CreateFromSQL("WO_Level_Grand_Child", "conx", V.Local.sSql, True)
+		
+		v.Local.sDateXLineRescheduled.Declare(string)	
+		f.Intrinsic.Control.For(v.Local.iCounter,0, v.DataTable.WO_Level_Grand_Child.Rowcount--,1)
+			
+			v.Local.sWOGrandChild.Set(Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Part!FieldValString)
+			f.Intrinsic.String.Left(v.Local.sWOGrandChild.Trim,6,v.Local.sWOGrandChild6)
+			f.Intrinsic.String.Right(v.Local.sWOGrandChild.Trim,3,v.Local.sWOGrandChild3)		
+				
+			v.Local.sSeqGrandChild.Set(Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Seq!FieldValString)
+			f.Intrinsic.String.Build("Select Top 1 Date_Start, Date_Due from V_Job_Operations where job = '{0}' and suffix = '{1}' and seq < '{2}' and LMO = 'M' order by Seq desc", v.Global.sWorkOrderMain,Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Suffix!FieldValString,v.Local.sSeqGrandChild,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+				F.Intrinsic.String.Format(v.ODBC.conx!rst.FieldValTrim!Date_Due,"MMDDYY",v.Local.sDateHeaderRescheduled)
+				'As they want to do the labor on Grand Grand Child and Grand Child on the same date, so we have to shift 1 day for the Grand Grand child Date_Due		
+				Function.Intrinsic.Date.Dateadd ("D",1,v.ODBC.conx!rst.FieldValTrim!Date_Due, v.Local.dDateHold)		
+				F.Intrinsic.String.Format(v.Local.dDateHold,"MMDDYY",v.Local.sDate)	
+				Function.Intrinsic.Date.Dateadd ("D",1,v.ODBC.conx!rst.FieldValTrim!Date_Due, v.Local.dDateHold)		
+				F.Intrinsic.String.Format(v.Local.dDateHold,"MMDDYY",v.Local.sDateXLineRescheduled)	
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+			
+			'Get the Date_Org_due of Grand Child
+			f.Intrinsic.String.Build("Select Date_Orig_Due from Job_Header where job = '{0}' and suffix = '{1}'", v.Local.sWOGrandChild6, v.Local.sWOGrandChild3, v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+				v.Local.sDate_org_due_gc.set(v.ODBC.conx!rst.FieldValTrim!Date_Orig_Due)	
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+		
+			F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", v.Local.sDate, v.Local.sWOGrandChild6, v.Local.sWOGrandChild3, V.Local.sParamSchedule)
+			F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)
+			
+			'Update the X line Date_due, Date_Start
+			f.Intrinsic.String.Build("update job_operations set date_start =  '{0}', date_due = '{0}' where job= '{1}' and suffix = '{2}' and Seq = '{3}'",v.Local.sDateXLineRescheduled, Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Job!FieldValString, Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Suffix!FieldValString,Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Seq!FieldValString, v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			
+'			'Update new Date_due to grand child Job_header
+'			f.Intrinsic.String.Build("update job_header set date_due = '{0}' where job= '{1}' and suffix = '{2}'",v.Local.sDateHeaderRescheduled, v.Local.sWOGrandChild6, v.Local.sWOGrandChild3, v.Local.sSql)
+'			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			
+			'Update Date_org_Due to grandchild Job_header
+			f.Intrinsic.String.Build("update job_header set Date_Orig_Due = '{0}' where job ='{1}' and suffix = '{2}'",v.Local.sDate_org_due_gc, v.Local.sWOGrandChild6, v.Local.sWOGrandChild3,v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			'				
+'			F.Intrinsic.String.Build("Update Job_Operations set Date_Start = '000000', Date_Due = '000000' where job = '{0}' and suffix = '{1}' and LMO = 'X' and left(Part,6) = '{0}'",v.Global.sWorkOrderMain,Variable.DataTable.WO_Level_Grand_Child(v.Local.iCounter).Suffix!FieldValString,v.Local.sSql)
+'			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+						
+		f.Intrinsic.Control.Next(v.Local.iCounter)
+		
+		Gui.F_Prog.progressBarMain.Value(10)	
+			
+		f.Intrinsic.UI.Msgbox("Rescheduling complete")
+		'=====End ReSchedule process=======================	
+		
+		
+		'=====Start Print WO process=======================	
+		'Ask if users want to print Work Orkders here
+		F.Intrinsic.UI.Msgbox("Would you like to print Work Orders?", "Print Work Orders", 4, V.Local.sFlagPrintReport)
+		f.Intrinsic.Control.If(v.Local.sFlagPrintReport,=,7)			
+			f.Intrinsic.Control.CallSub(unload)			
+		f.Intrinsic.Control.Else
+			f.Intrinsic.Control.CallSub(printreports)
+			f.Intrinsic.Control.CallSub(unload)
+		f.Intrinsic.Control.Endif
+		
+		'=====End Print WO process=========================
+			
+		'==============================================================================================================ReSchedule completed, Print work orders completed==============================================================================================
+	F.Intrinsic.Control.EndIf	
+	
+	'=============================================================================================================This part below is for first time creating Work Orders and Schedule==============================================================
+	'The Work Orders for this Sales Order lines have not been created, we ask users if they want to create Work Orders for the current sales order line.
+	F.Intrinsic.UI.Msgbox("Would you like to generate a Work Order for this sales order line?", "Work Order Generation", 4, V.Local.sFlag)	
+	F.Intrinsic.Control.If(V.Local.sFlag, =, 7)		
+		F.Intrinsic.Control.CallSub(unload)		
+	F.Intrinsic.Control.EndIf
+	
+	'=====Start creating Work Orders process=================
+	Gui.F_Prog.progressBarMain.Max(10)	
+	Gui.F_Prog.lblSec.Text("...collecting information for Parent Part - Level 0")
+	Gui.F_Prog.progressBarMain.Value(1)	
+	Gui.F_Prog..Show
+	
+	'a Work order needs to be created for this line of the sales order.  
+	F.Intrinsic.String.Build("O!*!{0}!*!{1}!*!1!*!1!*!!*!!*!!*!!*!!*!!*!!*!!*!", v.Local.sOrder, V.Local.sLine, V.Local.sParam)
+	
+	Gui.F_Prog.lblSec.Text("...generating Work Orders for level 0")
+
+	'Create work order for level 0
+	F.Global.General.CallWrapperSync(200803, v.Local.sParam)
+	
+	Gui.F_Prog.progressBarMain.Value(2)	
+	Gui.F_Prog.lblSec.Text("...scheduling Work Orders for Level 0")
+
+	'Get the Work Order number generated from ORDER_TO_WO table
+	F.Intrinsic.String.Build("Select JOB, SUFFIX, DATE_JOB_DUE from ORDER_TO_WO where ORDER_NO = '{0}' and RTRIM(ORDER_LINE) = '{1}' ", V.Local.sOrder, V.Local.sLine, V.Local.sSql)
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql, V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet.Trim, =, "")
+		'Work Order was not found
+		F.Intrinsic.UI.Msgbox("WO was not created.")		
+		'Exit program
+		F.Intrinsic.Control.CallSub(unload)
+	F.Intrinsic.Control.EndIf
+	
+	'Breaking up the result to pull the date and order info
+	F.Intrinsic.String.Split(V.Local.sRet, "*!*", V.Local.sRet)
+	V.Global.sWorkOrder.Set(V.Local.sRet(0))
+	V.Global.sSuffix.Set(V.Local.sRet(1))
+	v.Global.sWorkOrderMain.Set(v.Global.sWorkOrder)
+	v.Global.sSuffixMain.Set(v.Global.sSuffix)
+	F.Intrinsic.String.Right(V.Local.sRet(2), 4, V.Local.sDate)
+	F.Intrinsic.String.Mid(V.Local.sRet(2), 3, 2, V.Local.sRet(2))
+	F.Intrinsic.String.Build("{0}{1}", V.Local.sDate, V.Local.sRet(2), V.Local.sDate)
+	'EXAMPLE V.LOCAL.sDate: "022916"
+		
+	'BN, Schedule Work Order using callwrapper mode 500030, for schedule later at the end of Main
+	F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", V.Local.sDate, v.Global.sWorkOrderMain, v.Global.sSuffixMain, V.Local.sParamSchedule)
+	F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)
+	
+	f.Intrinsic.String.Build("Update Job_header set Job_type = 'M' where job = '{0}' and suffix = '{1}'", v.Global.sWorkOrderMain, v.Global.sSuffixMain,v.Local.sSql)
+	f.ODBC.Connection!conx.Execute(v.Local.sSql)
+
+	Gui.F_Prog.progressBarMain.Value(3)
+	Gui.F_Prog.lblSec.Text("...creating Work Orders for level 1")
+	
+	F.Data.DataTable.Create("ReportStuff", True)
+	F.Data.DataTable.AddColumn("ReportStuff", "WorkOrder", "String")
+	F.Data.DataTable.AddColumn("ReportStuff", "Suffix", "String")
+		
+	F.Data.DataTable.AddRow("ReportStuff", "WorkOrder", V.Local.sRet(0), "Suffix", V.Local.sRet(1))
+	
+	'Create a Data Table of the parts that need to be assembled for the Parent Work Order 
+	V.Local.sSql.Set("Select Job_Operations.Job as JobDad, Job_Operations.Suffix as SuffixDad, Job_Operations.Part, Job_Operations.Units, CAST(Job_Operations.Seq as INT) as SEQ, Job_Operations.Date_Start, Job_Operations.Date_Due")
+	F.Intrinsic.String.Build("{0} from Job_Operations Left Join INVENTORY_MST2 On INVENTORY_MST2.Part=Job_Operations.Part", V.Local.sSql, V.Local.sSql)
+	F.Intrinsic.String.Build("{0} where Job = '{1}' and Suffix = '{2}' and LMO = 'M' and Seq < '990000' and INVENTORY_MST2.code_Source = 'F' order by Seq asc", V.Local.sSql, V.Local.sRet(0), v.Local.sRet(1), v.Local.sSql)
+	F.Data.DataTable.CreateFromSQL("BaseWO", "conx", V.Local.sSql, True)
+	F.Data.DataTable.AddColumn("BaseWO", "Qty", "float",0)
+
+	Gui.F_Prog.progressBarMain.Value(4)
+	F.Intrinsic.Control.CallSub(createworkorder_level_1)
+
+	Gui.F_Prog.progressBarMain.Value(6)
+	Gui.F_Prog.lblSec.Text("...creating Work Orders for level 2")		
+	F.Intrinsic.Control.CallSub(createworkorder_level_2)
+		
+	Gui.F_Prog.progressBarMain.Value(7)
+	Gui.F_Prog.lblSec.Text("...linking Work Orders")	
+	F.Intrinsic.Control.CallSub(sequencecreator)
+		
+	Gui.F_Prog.progressBarMain.Value(10)		
+
+	F.Intrinsic.UI.Msgbox("Creating and Scheduling Work Orders complete", "Create and Schedule")	
+	Gui.F_Prog..Visible(False)
+	
+	
+	'=====Start Print WO process=======================	
+	'Ask if users want to print Work Orkders here
+	F.Intrinsic.UI.Msgbox("Would you like to print Work Orders?", "Print Work Orders", 4, V.Local.sFlagPrintReport)
+	f.Intrinsic.Control.If(v.Local.sFlagPrintReport,=,7)			
+		f.Intrinsic.Control.CallSub(unload)			
+	f.Intrinsic.Control.Else
+		f.Intrinsic.Control.CallSub(printreports)
+		f.Intrinsic.Control.CallSub(unload)
+	f.Intrinsic.Control.Endif	
+	'=====End Print WO process=========================
+	
+	'=============================================================================================================End the part for first time creating Work Orders and Schedule==============================================================
+
+F.Intrinsic.Control.Else
+	'Not hook 12231
+	F.Intrinsic.Control.CallSub(unload)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Unload.End
+
+Program.Sub.createworkorder_level_1.Start
+F.Intrinsic.Control.SetErrorHandler("CreateWorkOrder_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.sHold.Declare
+V.Local.sRet.Declare
+V.Local.sLine.Declare
+V.Local.sQty.Declare
+V.Local.sDate.Declare
+V.Local.sLabel.Declare
+V.Local.sFilePath.Declare
+V.Local.sPart.Declare
+V.Local.sPartSeq.Declare
+V.Local.sUnits.Declare
+V.Local.sDateDue.Declare
+V.Local.sDateStart.Declare
+V.Local.sParam.Declare
+V.Local.sParamSchedule.Declare
+V.Local.sSql.Declare
+
+v.Local.sJobFilePath.Declare
+V.Local.sChildRunTimeQty.Declare
+V.Local.sDesc2.Declare
+V.Local.sDesc3.Declare
+V.Local.sExtraTextWO.Declare
+V.Local.sDescRouter.Declare
+v.Local.sDescRouterExtra.Declare
+'sOperation, sDesc, sFiller, sSortCode, sProj, sSetup, sOverlap, sUnit, sBurden, sRouter, sSuffix, sRuntime, sRate, 
+v.Local.iCount.Declare
+V.Local.iC.Declare
+V.Local.iHold.Declare
+V.Local.iCounterLeadTime.Declare
+
+v.Local.fHold.Declare(float)
+v.Local.bSecondLine.Declare(boolean)
+v.Local.dDateDue.Declare
+V.Local.dDateStart.Declare
+
+'build the JBMDLA.TXT file to generate the work order
+F.Intrinsic.String.Format(v.Ambient.Date, "MMDDYY", v.Local.sDate)
+F.Data.DataTable.AddColumn("BaseWO", "Job", "String")
+F.Data.DataTable.AddColumn("BaseWO", "Suffix", "String")
+
+f.Intrinsic.String.Build("{0}\JBMDLA.TXT",v.Caller.FilesDir,v.Local.sFilePath)
+F.Intrinsic.String.Build("{0}\JOBCOST.TXT", V.Caller.FilesDir, V.Local.sJobFilePath)
+
+f.Intrinsic.String.Build("Select * from V_Job_Operations where job = '{0}' and suffix = '998'",v.Global.sWorkOrderMain,v.Local.sSql)
+F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+	v.Local.bSecondLine.Set(True)
+f.Intrinsic.Control.EndIf
+f.ODBC.conx!rst.Close
+
+f.Intrinsic.Control.If(v.Local.bSecondLine,=,False)
+	v.Global.sSuffix.Set("999")
+f.Intrinsic.Control.Else
+	f.Intrinsic.String.Build("Select min(Suffix) as MinSuffix from V_Job_Operations where  Cast(V_Job_Operations.Suffix as INT) > 400 and job = '{0}'",V.Global.sWorkOrderMain,V.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+		v.Global.sSuffix.Set(v.ODBC.conx!rst.FieldValTrim!MinSuffix)
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close		
+f.Intrinsic.Control.EndIf
+
+'We are creating the work orders for the sub assembly
+F.Intrinsic.Control.For(V.Local.iCount, 0, V.DataTable.BaseWO.RowCount--, 1)
+
+	V.Local.sLine.Set("")
+	V.Local.sPart.Set(V.DataTable.BaseWO(V.Local.iCount).Part!FieldValTrim)
+	
+	f.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).Seq!FieldValString,"0",6, v.Local.sHold)
+	
+	f.Intrinsic.String.Build("select * from v_router_line where router = '{0}' AND PART_WC_OUTSIDE = '{1}' and Line_Router = '{2}'",v.Global.sParentPart, v.Local.sPart,v.Local.sHold ,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)		
+		v.Local.sChildRunTimeQty.Set(v.ODBC.conx!rst.FieldValTrim!Run_Time)
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close	
+	
+	f.Intrinsic.Math.Mult(v.Local.sChildRunTimeQty,v.Global.fParentQty,v.Local.fHold)
+	V.Local.sUnits.Set(v.Local.fHold)
+		
+	Function.Data.DataTable.SetValue("BaseWO", v.Local.iCount, "Qty", v.Local.fHold)
+
+	F.Intrinsic.String.RPad(V.Local.sPart, " ", 20, V.Local.sPart)
+	
+	F.Intrinsic.Math.sub(v.Global.sSuffix, 1, V.Global.sSuffix)
+	F.Intrinsic.String.LPad(V.Global.sSuffix, "0", 3, V.Global.sSuffix)
+
+	F.Data.DataTable.SetValue("BaseWO", V.Local.iCount, "JOB", V.Global.sWorkOrder, "Suffix", V.Global.sSuffix)
+	F.Intrinsic.String.Build("{0}{1}{2}  {2}", V.Global.sWorkOrder, V.Global.sSuffix, V.Local.sPart, V.Local.sLine)
+	
+	'Work Order Description 52-81 30
+	
+	'Run Qty Date Opened
+	F.Intrinsic.String.RPad(v.Local.sLine, " ", 107, v.Local.sLine)
+	F.Intrinsic.String.LPad(V.Local.sUnits, "0", 16, v.Local.sQty)
+	F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sQty,v.Local.sLine)
+	
+	'xpoint
+	'Due Date MMDDYY 130-135
+	f.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).SEQ!FieldValTRIM,"0",6,v.Local.sHold)
+	f.Intrinsic.String.Build("Select Date_Start, Date_Due from V_Job_Operations where job = '{0}' and suffix = '{1}' and seq = '{2}'", v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sHold,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)			
+		V.Local.dDateDue.Set(v.ODBC.conx!rst.FieldValTrim!Date_Due)	
+		F.Intrinsic.String.Format(v.Local.dDateDue,"MMDDYY",v.Local.sDateDue)	
+		F.Intrinsic.String.Format(v.ODBC.conx!rst.FieldValTrim!Date_Start,"MMDDYY",v.Local.sDateStart)
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close	
+	F.Intrinsic.String.RPad(v.Local.sLine, " ", 129, v.Local.sLine)
+	F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sDateDue,v.Local.sLine)
+ 	'Date Start MMDDYY 136-141
+	F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sDateStart,v.Local.sLine)
+			
+'	'Additional Description 1 148-217 70
+
+'	'Additional Description 2 218-287 70
+
+'	Customer Quantity 361-376 16 8.4
+	F.Intrinsic.String.RPad(v.Local.sLine, " ", 360, v.Local.sLine)
+	F.Intrinsic.String.Format(V.Local.sUnits,"0.0000",v.Local.sQty)
+	F.Intrinsic.String.LPad(v.Local.sQty,"0",16,v.Local.sQty)	
+	F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sQty,v.Local.sLine)
+	
+	'Part Description 377-406 (30 characters)
+	F.Intrinsic.String.RPad(v.Local.sLine, " ", 376, v.Local.sLine)
+	f.Intrinsic.String.RPad(v.Local.sPart," ",20,v.Local.sHold)
+	f.Intrinsic.String.Build("Select Description from Inventory_mstr where part = '{0}'",v.Local.sHold,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+		v.Local.sHold.Set(v.ODBC.conx!rst.FieldValTrim!Description)
+		F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,V.Local.sLine)
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close	
+	
+	
+'	'Additional Description 3 417-489 70
+'	'Do not use this, when using this, errors come up with No Work Order Record. So we update late with Job_type as Linked Work Order and Schedule_dir as Backward
+'	Parent Work Order 487-492 6
+'	Parent Work Order Suffix 493-495 3
+'	F.Intrinsic.String.RPad(v.Local.sLine, " ", 486, v.Local.sLine)
+'	f.Intrinsic.String.RPad(v.Local.sLine,v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sLine)
+	
+	F.Intrinsic.String.RPad(v.Local.sLine, " ", 495, v.Local.sLine) 
+
+	
+	F.Intrinsic.File.String2File(V.Local.sFilePath,V.Local.sLine)
+	F.Global.General.CallWrapperSync(50, "UPLJBMUL/AL")
+
+	'Update Date_Opened
+	f.Intrinsic.String.Build("Update Job_header set Date_opened = (Select Date_Opened from job_header where Job = '{0}' and suffix = '{1}') where job = '{2}' and suffix = '{3}'",v.Global.sWorkOrderMain,v.Global.sSuffixMain,V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sSql)
+
+'	f.Intrinsic.String.Build("Update Job_header set Date_opened = '{0}' where job = '{1}' and suffix = '{2}'",v.Local.sDateOpen,V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sSql)
+	f.ODBC.Connection!conx.Execute(v.Local.sSql)
+	
+	'Update Date_Orig_Due, job_type, schedule_dir		
+	f.Intrinsic.String.Build("Update Job_header set Date_Orig_Due = '{0}' , Job_type = 'L', Schedule_dir = '1' where job = '{1}' and suffix = '{2}'",v.Local.sDateDue,V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sSql)
+	f.ODBC.Connection!conx.Execute(v.Local.sSql)	
+
+
+		
+	'We need to create the JOB Operations from the Router for that work order using the Data Upload tables 
+	F.Intrinsic.String.Build("Select * from V_ROUTER_LINE where ROUTER = '{0}' order by LINE_ROUTER asc", V.Local.sPart, V.Local.sSql)
+	
+	F.Data.DataTable.CreateFromSQL("Temp", "conx", V.Local.sSql)
+
+	V.Local.sLine.Set("")
+	'Format columns for file creation
+	F.Intrinsic.Control.If(V.DataTable.Temp.RowCount, >, 0)
+		F.Intrinsic.String.Build("{0} Lines to be processed", V.DataTable.Temp.RowCount, V.Local.sLabel)
+	F.Intrinsic.Control.EndIf
+	
+
+	'Create datatable to update Lead_Time after this below For loop
+	f.Data.DataTable.Create("Line_LeadTime",True)
+	f.Data.DataTable.AddColumn("Line_LeadTime","Line","String","")
+	f.Data.DataTable.AddColumn("Line_LeadTime","LeadTime","String","")
+		
+	F.Intrinsic.Control.For(V.Local.iC, 0, V.DataTable.Temp.RowCount--, 1)'replace stuff
+	
+		f.Intrinsic.Control.If(V.DataTable.Temp(V.Local.iC).LMO!FieldValTrim,<>,"C")
+	
+			f.Data.DataTable.AddRow("Line_LeadTime","Line",V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal, "LeadTime", V.DataTable.Temp(V.Local.iC).LEAD_TIME!FieldVal)			
+			' JOB
+			F.Intrinsic.String.Concat(V.Local.sLine,V.Global.sWorkOrder,v.Local.sLine)	
+			'SUFFIX	
+			F.Intrinsic.String.Concat(V.Local.sLine,V.Global.sSuffix,v.Local.sLine)	
+			'SEQ
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal,v.Local.sLine)	
+			'OPERATION
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).OPERATION!FieldVal,v.Local.sLine)	
+			'FLAG_SET_UP
+			F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+			'LMO
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LMO!FieldVal,v.Local.sLine)	
+			'DESCRIPTION
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).DESC_RT_LINE!FieldVal,v.Local.sLine)	
+			'UM
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).UM_INVENTORY!FieldVal,v.Local.sLine)	
+			'PWC
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).PART_WC_OUTSIDE!FieldVal,v.Local.sLine)	
+			'ROUTER	
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).ROUTER!FieldVal,v.Local.sLine)	
+			'ROUTER_SEQ
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal,v.Local.sLine)	
+			'SETUP 'customer always has 0 as SetUp
+			F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).SET_UP!FieldVal,"0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+			'RATE_PIECE 'Quantity to make 1 from Router Runtime
+			F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).RUN_TIME!FieldVal,"0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+			'BURDEN RATE => to check this again => ok verified, should be all 0
+			F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+			'HOURS_ESTIMATED => to check this again
+			F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+			'DATE_START
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDate,v.Local.sLine)	
+			'DATE_DUE
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDateDue,v.Local.sLine)	
+			'DATE_PO_ORDER
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDate,v.Local.sLine)	
+			'RATE
+			F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).RATE!FieldVal,"0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+			'CODE_SORT_OPER => from sort code
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).SORT_CODE!FieldVal,v.Local.sLine)	
+			'PROJ_GROUP => from project_group	
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).PROJ_GROUP!FieldVal,v.Local.sLine)	
+			'TASK_SIGNOFF_USER	
+			F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).SIGNOFF_GRPUSR!FieldVal,v.Local.sLine)	
+			'TASK_COMP_REQ
+			F.Intrinsic.String.Concat(V.Local.sLine,"N",v.Local.sLine)	
+			'NO_ROUTER_UPDATE
+			F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+			'OVERLAP
+			F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).OVERLAP!FieldVal,"0.0000",V.Local.shold)
+			F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+			F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)
+			
+			F.Intrinsic.String.Build("{0}{1}", V.Local.sLine, V.Ambient.NewLine, V.Local.sLine)
+			
+		'	gui.Form.txtMsg.Text(v.Local.sLine)
+		'	gui.Form..Show
+		'	f.Intrinsic.UI.Msgbox(v.Local.iC,"Line")
+	
+		f.Intrinsic.Control.EndIf
+		
+	F.Intrinsic.Control.Next(V.Local.iC)
+		
+	
+	'Create file that program will read
+	F.Intrinsic.File.String2File(V.Local.sJobFilePath,V.Local.sLine)	
+	F.Global.General.CallWrapperSync(50, "UPLJOBST/AL")	
+
+	'Update Lead_time
+	'In Router: Router, Router_suffix, line_router, lead_time
+	' Job, suffix, Seq, Lead_time
+	F.Intrinsic.Control.For(V.Local.iCounterLeadTime,0,V.DataTable.Line_LeadTime.RowCount--,1)
+		f.Intrinsic.String.Build("Update Job_Operations set Lead_Time = '{0}' where job = '{1}' and suffix = '{2}' and Seq = '{3}'",Variable.DataTable.Line_LeadTime(v.Local.iCounterLeadTime).LeadTime!FieldValString,V.Global.sWorkOrder,V.Global.sSuffix,Variable.DataTable.Line_LeadTime(v.Local.iCounterLeadTime).Line!FieldValString,v.Local.sSql)
+		f.ODBC.Connection!conx.Execute(v.Local.sSql)
+	f.Intrinsic.Control.Next(v.Local.iCounterLeadTime)	
+	f.Data.DataTable.Close("Line_LeadTime")
+
+	'Process Comments for Work Order, APR 19, 2017
+	'Comment header for Seq 000001 in Job_Operations
+	v.Local.sDesc2.Set("")
+	v.Local.sDesc3.Set("")
+	v.Local.sExtraTextWO.Set("")
+	f.Intrinsic.String.Build("select DESCRIPTION_2, DESCRIPTION_3 from INVENTORY_MST2 where Part = '{0}'",v.Local.sPart,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+		f.Intrinsic.String.Replace(v.ODBC.conx!rst.FieldValTrim!DESCRIPTION_2,"'","''",v.Local.sDesc2)
+		f.Intrinsic.String.Replace(v.ODBC.conx!rst.FieldValTrim!DESCRIPTION_3,"'","''",v.Local.sDesc3)			
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close
+	f.Intrinsic.String.Build("Insert into Job_Operations (job, suffix, seq, lmo, Description, router_seq) values ('{0}','{1}','000001','C','{2}','000000')",V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sDesc2,v.Local.sSql)	
+	f.ODBC.Connection!conx.Execute(v.Local.sSql)	
+	
+	'Comments details for Seq 000001 in WO_SEQ_COMMENTS
+	f.Intrinsic.String.Build("SELECT TEXT FROM INV_EXTRA_TEXT WHERE PART = '{0}'",V.Local.sPart,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rstExtra",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rstExtra.EOF,<>,True)
+		f.Intrinsic.String.Replace(v.ODBC.conx!rstExtra.FieldValTrim!Text,"'","''",v.Local.sExtraTextWO)					
+	f.Intrinsic.Control.EndIf	
+	f.ODBC.conx!rstExtra.Close
+			
+	f.Intrinsic.String.Concat(v.Local.sDesc3,v.Ambient.NewLine,V.Local.sExtraTextWO,V.Local.sExtraTextWO)
+	f.Intrinsic.String.Build("Insert into WO_SEQ_COMMENTS VALUES('{0}','{1}','000001','{2}')",V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sExtraTextWO,v.Local.sSql)
+	f.ODBC.Connection!conx.Execute(v.Local.sSql)
+		
+	'Comments below 000001
+	'Comment header in Job_Operations	
+	f.Intrinsic.String.Build("Select * from V_ROUTER_LINE where ROUTER = '{0}' and LMO = 'C' order by LINE_ROUTER asc",v.Local.sPart.Trim,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rstCHead",V.Local.sSQL)
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstCHead.EOF,=,True)
+		v.Local.sDescRouter.Set("")
+		f.Intrinsic.String.Replace(v.ODBC.conx!rstCHead.FieldValTrim!Desc_RT_Line,"'","''",v.Local.sDescRouter)		
+		f.Intrinsic.String.Build("Insert into Job_Operations (job, suffix, seq, lmo, Description, router_seq) values ('{0}','{1}','{2}','C','{3}','000000')",V.Global.sWorkOrder, V.Global.sSuffix, v.ODBC.conx!rstCHead.FieldValTrim!Line_Router,v.Local.sDescRouter,v.Local.sSql)
+		F.ODBC.Connection!conx.Execute(V.Local.sSql)
+		F.ODBC.conx!rstCHead.MoveNext
+	f.Intrinsic.Control.Loop
+	f.ODBC.conx!rstCHead.Close
+		
+	'Comments details in WO_SEQ_COMMENTS
+	f.Intrinsic.String.Build("Select * FROM RTR_SEQ_COMMENTS WHERE RTR_NUMBER = '{0}' order by RTR_SEQ",v.Local.sPart.Trim,v.Local.sSql)
+	F.ODBC.Connection!conx.OpenRecordSetRO("rstComments",V.Local.sSQL)
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstComments.EOF,=,True)
+		v.Local.sDescRouterExtra.Set("")
+		f.Intrinsic.String.Replace(v.ODBC.conx!rstComments.FieldValTrim!Text,"'","''",v.Local.sDescRouterExtra)		
+		f.Intrinsic.String.Build("Insert into WO_SEQ_COMMENTS VALUES('{0}','{1}','{2}','{3}')",V.Global.sWorkOrder, V.Global.sSuffix, v.ODBC.conx!rstComments.FieldValTrim!RTR_SEQ,v.Local.sDescRouterExtra,v.Local.sSql)
+		F.ODBC.Connection!conx.Execute(V.Local.sSql)
+		F.ODBC.conx!rstComments.MoveNext
+	f.Intrinsic.Control.Loop
+	f.ODBC.conx!rstComments.Close	
+			
+	'BN
+	F.Intrinsic.Control.If(V.DataTable.Temp.RowCount, >, 0)
+		'THIS IS THE CLIENT SPECIFIC REQUIREMENT for Scheduling
+		Function.Intrinsic.Date.Dateadd ("D",1,v.Local.dDateDue,v.Local.dDateDue)
+		F.Intrinsic.String.Format(v.Local.dDateDue,"MMDDYY",v.Local.sDateDue)	
+		F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", v.Local.sDateDue, v.Global.sWorkOrderMain, v.Global.sSuffix, V.Local.sParamSchedule)
+		F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)
+	F.Intrinsic.Control.EndIf
+
+	F.Data.DataTable.Close("Temp")	
+		
+F.Intrinsic.Control.Next(V.Local.iCount)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("CreateWorkOrder_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.createworkorder_level_1.End
+
+Program.Sub.createworkorder_level_2.Start
+
+F.Intrinsic.Control.SetErrorHandler("RouterInfo_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sHold.Declare
+V.Local.sRet.Declare
+V.Local.sLine.Declare
+V.Local.sQty.Declare
+V.Local.sDate.Declare
+V.Local.sFilePath.Declare
+V.Local.sPart.Declare
+V.Local.sPartSeq.Declare
+V.Local.sLabel.Declare
+V.Local.sUnits.Declare
+V.Local.sDateDue.Declare
+v.Local.sDateStart.Declare
+V.Local.sParam.Declare
+V.Local.sParamSchedule.Declare
+V.Local.sSql.Declare
+
+V.Local.sJobFilePath.Declare
+V.Local.sPartChild.Declare
+V.Local.sGrandChildRunTime.Declare
+V.Local.sDesc2.Declare
+V.Local.sDesc3.Declare
+V.Local.sExtraTextWO.Declare
+v.Local.sDescRouter.Declare
+V.Local.sDescRouterExtra.Declare
+v.Local.sSuffix.Declare
+' sOperation, sDesc, sFiller, sSortCode, sProj, sSetup, sOverlap, sUnit, sBurden, sEsd, sRouter, sRuntime, sRate,
+v.Local.iCount.Declare
+V.Local.iIndex.Declare
+V.Local.iC.Declare
+V.Local.iTable.Declare
+V.Local.iCounterLeadTime.Declare
+
+V.Local.fHOld.Declare(float)
+v.Local.dDateDue.Declare
+V.Local.dDateStart.Declare
+	
+F.Intrinsic.String.Format(v.Ambient.Date, "MMDDYY", v.Local.sDate)
+
+'build the JBMDLA.TXT file to generate the work order
+f.Intrinsic.String.Build("{0}\JBMDLA.TXT",v.Caller.FilesDir,v.Local.sFilePath)
+F.Intrinsic.String.Build("{0}\JOBCOST.TXT", V.Caller.FilesDir, V.Local.sJobFilePath)
+
+V.Local.iTable.Set(V.DataTable.BaseWO.RowCount--)
+
+F.Intrinsic.Control.For(V.Local.iCount, 0, V.Local.iTable, 1)
+	v.Local.sPartChild.Set(V.DataTable.BaseWO(V.Local.iCount).Part!FieldValString)
+	V.Local.sSuffix.Set(V.DataTable.BaseWO(V.Local.iCount).Suffix!FieldValTrim)
+	V.Local.sSql.Set("Select Job_Operations.Job as JobDad, Job_Operations.Suffix as SuffixDad, Job_Operations.Part, Job_Operations.Units, '' as Job, '' as Suffix, Cast(Job_Operations.Seq as INT) as SEQ, Job_Operations.Date_Start, Job_Operations.Date_Due")
+	F.Intrinsic.String.Build("{0} from Job_Operations Left Join INVENTORY_MST2 On INVENTORY_MST2.Part=Job_Operations.Part", V.Local.sSql, V.Local.sSql)
+	F.Intrinsic.String.Build("{0} where Job_Operations.Job = '{1}' and Job_Operations.Suffix = '{2}' and LMO = 'M' and Seq < '990000' and INVENTORY_MST2.code_Source = 'F' order by Seq asc", V.Local.sSql, V.Global.sWorkOrder, V.Local.sSuffix, v.Local.sSql)
+	F.Data.DataTable.CreateFromSQL("Temp0", "conx", V.Local.sSql, True)
+	
+	F.Intrinsic.Control.If(V.DataTable.Temp0.RowCount--, >=, 0)
+		F.Intrinsic.Control.For(V.Local.iIndex, 0, V.DataTable.Temp0.RowCount--, 1)
+			V.Local.sLine.Set("")
+			V.Local.sPart.Set(V.DataTable.Temp0(V.Local.iIndex).Part!FieldValTrim)		
+			
+			f.Intrinsic.String.LPad(V.DataTable.Temp0(V.Local.iIndex).Seq!FieldValString,"0",6, v.Local.sPartSeq)
+			
+			f.Intrinsic.String.Build("select * from v_router_line where router = '{0}' AND PART_WC_OUTSIDE = '{1}' and Line_Router = '{2}'",v.Local.sPartChild,v.Local.sPart,v.Local.sPartSeq,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)		
+				v.Local.sGrandChildRunTime.Set(v.ODBC.conx!rst.FieldValTrim!Run_Time)
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close	
+					
+			f.Intrinsic.Math.Mult(v.Local.sGrandChildRunTime,V.DataTable.BaseWO(V.Local.iCount).Qty!FieldValFloat,v.Local.fHold)
+			V.Local.sUnits.Set(v.Local.fHold)
+
+			F.Intrinsic.Math.sub(V.Global.sSuffix, 1, V.Global.sSuffix)
+			F.Intrinsic.String.LPad(V.Global.sSuffix, "0", 3, V.Global.sSuffix)
+			
+			'BN LPad => RPart
+			F.Intrinsic.String.RPad(V.Local.sPart, " ", 20, V.Local.sPart)
+			
+			F.Data.DataTable.AddRow("ReportStuff", "WorkOrder", V.Global.sWorkOrder, "Suffix", V.Global.sSuffix)
+			F.Data.DataTable.SetValue("Temp0", V.Local.iIndex, "Job", V.Global.sWorkOrder, "Suffix", V.Global.sSuffix)
+			F.Intrinsic.String.Build("{0}{1}{2}  {2}", V.Global.sWorkOrder, V.Global.sSuffix, V.Local.sPart, V.Local.sLine)
+			F.Intrinsic.String.RPad(V.Local.sLine, " ", 107, V.Local.sLine)
+					
+			'Run Qty Date Opened
+			F.Intrinsic.String.LPad(V.Local.sUnits, "0", 16, v.Local.sQty)
+			F.Intrinsic.String.Build("{0}{1}{2}", v.Local.sLine, v.Local.sQty, v.Local.sLine)
+			
+			'xpoint
+			'Due Date MMDDYY 130-135
+			f.Intrinsic.String.Build("Select Date_Start, Date_Due from V_Job_Operations where job = '{0}' and suffix = '{1}' and SEQ = '{2}'", v.Global.sWorkOrderMain,V.DataTable.Temp0(V.Local.iIndex).SuffixDad!FieldValTrim,V.Local.sPartSeq,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+				V.Local.dDateDue.Set(v.ODBC.conx!rst.FieldValTrim!Date_Due)	
+				F.Intrinsic.String.Format(v.Local.dDateDue,"MMDDYY",v.Local.sDateDue)				
+				F.Intrinsic.String.Format(v.ODBC.conx!rst.FieldValTrim!Date_Start,"MMDDYY",v.Local.sDateStart)
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close	
+			F.Intrinsic.String.RPad(v.Local.sLine, " ", 129, v.Local.sLine)
+			F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sDateDue,v.Local.sLine)
+		 	'Date Start MMDDYY 136-141
+			F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sDateStart,v.Local.sLine)			
+			
+'			Customer Quantity 361-376 16 8.4
+			F.Intrinsic.String.RPad(v.Local.sLine, " ", 360, v.Local.sLine)
+			F.Intrinsic.String.Format(V.Local.sUnits,"0.0000",v.Local.sQty)
+			F.Intrinsic.String.LPad(v.Local.sQty,"0",16,v.Local.sQty)	
+			F.Intrinsic.String.Concat(v.Local.sLine, v.Local.sQty,v.Local.sLine)
+									
+			'Part Description 377-406 (30 characters)
+			F.Intrinsic.String.RPad(v.Local.sLine, " ", 376, v.Local.sLine)
+			f.Intrinsic.String.RPad(v.Local.sPart," ",20,v.Local.sHold)
+			f.Intrinsic.String.Build("Select Description from Inventory_mstr where part = '{0}'",v.Local.sHold,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+				v.Local.sHold.Set(v.ODBC.conx!rst.FieldValTrim!Description)
+				F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,V.Local.sLine)
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+			
+			'Do not use this, when using this, errors come up with No Work Order Record. So we update late with Job_type as Linked Work Order and Schedule_dir as Backward
+			'Parent Work Order 487-492 6
+		'	Parent Work Order Suffix 493-495 3					
+'			F.Intrinsic.String.RPad(v.Local.sLine, " ", 486, v.Local.sLine)
+'			f.Intrinsic.String.RPad(v.Local.sLine,v.Global.sWorkOrderMain,v.Global.sSuffixMain,v.Local.sLine)
+			
+			F.Intrinsic.String.RPad(v.Local.sLine, " ", 495, v.Local.sLine)
+			
+			'Create the work order
+			F.Intrinsic.File.String2File(V.Local.sFilePath,V.Local.sLine)
+			F.Global.General.CallWrapperSync(50, "UPLJBMUL/AL")	
+			
+			'Update Date_Opened
+			f.Intrinsic.String.Build("Update Job_header set Date_opened = (Select Date_Opened from job_header where Job = '{0}' and suffix = '{1}')  where job = '{2}' and suffix = '{3}'",v.Global.sWorkOrderMain,v.Global.sSuffixMain,V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sSql)
+
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			
+			
+			'Update Date_Orig_Due, job_type, Schedule_dir		
+			f.Intrinsic.String.Build("Update Job_header set Date_Orig_Due = '{0}', Job_type = 'L', Schedule_dir = '1' where job = '{1}' and suffix = '{2}'",v.Local.sDateDue,V.Global.sWorkOrder, V.Global.sSuffix, v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)					
+
+			'We need to create the JOB Operations from the Router for that work order using the Data Upload tables 
+			F.Intrinsic.String.Build("Select * from V_ROUTER_LINE where ROUTER = '{0}' order by LINE_ROUTER asc ", V.Local.sPart, V.Local.sSql)
+			F.Data.DataTable.CreateFromSQL("Temp", "conx", V.Local.sSql)
+			
+			F.Intrinsic.String.Build("{0} Lines to be processed", V.DataTable.Temp.RowCount--, V.Local.sLabel)
+		
+			V.Local.sLine.Set("")
+			
+			'Create datatable to update Lead_Time after this below For loop
+			f.Data.DataTable.Create("Line_LeadTime",True)
+			f.Data.DataTable.AddColumn("Line_LeadTime","Line","String","")
+			f.Data.DataTable.AddColumn("Line_LeadTime","LeadTime","String","")
+
+			'Format columns for file creation
+			F.Intrinsic.Control.For(V.Local.iC, 0, V.DataTable.Temp.RowCount--, 1)'replace stuff
+			
+				f.Intrinsic.Control.If(V.DataTable.Temp(V.Local.iC).LMO!FieldValTrim,<>,"C")
+				
+	  				f.Data.DataTable.AddRow("Line_LeadTime","Line",V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal, "LeadTime", V.DataTable.Temp(V.Local.iC).LEAD_TIME!FieldVal)			
+	
+	  				' JOB
+					F.Intrinsic.String.Concat(V.Local.sLine,V.Global.sWorkOrder,v.Local.sLine)	
+					'SUFFIX	
+					F.Intrinsic.String.Concat(V.Local.sLine,V.Global.sSuffix,v.Local.sLine)	
+					'SEQ
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal,v.Local.sLine)	
+					'OPERATION
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).OPERATION!FieldVal,v.Local.sLine)	
+					'FLAG_SET_UP
+					F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+					'LMO
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LMO!FieldVal,v.Local.sLine)	
+					'DESCRIPTION
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).DESC_RT_LINE!FieldVal,v.Local.sLine)	
+					'UM
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).UM_INVENTORY!FieldVal,v.Local.sLine)	
+					'PWC
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).PART_WC_OUTSIDE!FieldVal,v.Local.sLine)	
+					'ROUTER	
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).ROUTER!FieldVal,v.Local.sLine)	
+					'ROUTER_SEQ
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).LINE_ROUTER!FieldVal,v.Local.sLine)	
+					'SETUP 'customer always has 0 as SetUp
+					F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).SET_UP!FieldVal,"0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+					'RATE_PIECE 'Quantity to make 1 from Router Runtime
+					F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).RUN_TIME!FieldVal,"0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+					'BURDEN RATE => to check this again => OK verified, should be always 0
+					F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+					'HOURS_ESTIMATED => to check this again
+					F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+					'DATE_START
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDate,v.Local.sLine)	
+					'DATE_DUE
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDateDue,v.Local.sLine)	
+					'DATE_PO_ORDER
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sDate,v.Local.sLine)	
+					'RATE
+					F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).RATE!FieldVal,"0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+					'CODE_SORT_OPER => from sort code
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).SORT_CODE!FieldVal,v.Local.sLine)	
+					'PROJ_GROUP => from project_group	
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).PROJ_GROUP!FieldVal,v.Local.sLine)	
+					'TASK_SIGNOFF_USER	
+					F.Intrinsic.String.Concat(V.Local.sLine,V.DataTable.Temp(V.Local.iC).SIGNOFF_GRPUSR!FieldVal,v.Local.sLine)	
+					'TASK_COMP_REQ
+					F.Intrinsic.String.Concat(V.Local.sLine,"N",v.Local.sLine)	
+					'NO_ROUTER_UPDATE
+					F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+					'OVERLAP
+					F.Intrinsic.String.Format(V.DataTable.Temp(V.Local.iC).OVERLAP!FieldVal,"0.0000",V.Local.shold)
+					F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+					F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)
+					
+					F.Intrinsic.String.Build("{0}{1}", V.Local.sLine, V.Ambient.NewLine, V.Local.sLine)
+					
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Next(V.Local.iC)
+			
+			'Create file that program will read
+			F.Intrinsic.File.String2File(V.Local.sJobFilePath,V.Local.sLine)
+			F.Global.General.CallWrapperSync(50, "UPLJOBST/A")
+			
+			'Update Lead_time
+			'In Router: Router, Router_suffix, line_router, lead_time
+			' Job, suffix, Seq, Lead_time
+			F.Intrinsic.Control.For(V.Local.iCounterLeadTime,0,V.DataTable.Line_LeadTime.RowCount--,1)
+				f.Intrinsic.String.Build("Update Job_Operations set Lead_Time = '{0}' where job = '{1}' and suffix = '{2}' and Seq = '{3}'",Variable.DataTable.Line_LeadTime(v.Local.iCounterLeadTime).LeadTime!FieldValString,V.Global.sWorkOrder,V.Global.sSuffix,Variable.DataTable.Line_LeadTime(v.Local.iCounterLeadTime).Line!FieldValString,v.Local.sSql)
+				f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			f.Intrinsic.Control.Next(v.Local.iCounterLeadTime)	
+			f.Data.DataTable.Close("Line_LeadTime")
+			
+			'Process Comments for Work Order, APR 19, 2017
+			'Comment header for Seq 000001 in Job_Operations
+			v.Local.sDesc2.Set("")
+			v.Local.sDesc3.Set("")
+			v.Local.sExtraTextWO.Set("")
+			f.Intrinsic.String.Build("select DESCRIPTION_2, DESCRIPTION_3 from INVENTORY_MST2 where Part = '{0}'",v.Local.sPart,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)
+				f.Intrinsic.String.Replace(v.ODBC.conx!rst.FieldValTrim!DESCRIPTION_2,"'","''",v.Local.sDesc2)
+				f.Intrinsic.String.Replace(v.ODBC.conx!rst.FieldValTrim!DESCRIPTION_3,"'","''",v.Local.sDesc3)			
+			f.Intrinsic.Control.EndIf
+			f.ODBC.conx!rst.Close
+			f.Intrinsic.String.Build("Insert into Job_Operations (job, suffix, seq, lmo, Description, router_seq) values ('{0}','{1}','000001','C','{2}','000000')",V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sDesc2,v.Local.sSql)	
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)	
+			
+			'Comments details for Seq 000001 in WO_SEQ_COMMENTS
+			f.Intrinsic.String.Build("SELECT TEXT FROM INV_EXTRA_TEXT WHERE PART = '{0}'",V.Local.sPart,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rstExtra",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rstExtra.EOF,<>,True)
+				f.Intrinsic.String.Replace(v.ODBC.conx!rstExtra.FieldValTrim!Text,"'","''",v.Local.sExtraTextWO)							
+			f.Intrinsic.Control.EndIf	
+			f.ODBC.conx!rstExtra.Close
+					
+			f.Intrinsic.String.Concat(v.Local.sDesc3,v.Ambient.NewLine,V.Local.sExtraTextWO,V.Local.sExtraTextWO)
+			f.Intrinsic.String.Build("Insert into WO_SEQ_COMMENTS VALUES('{0}','{1}','000001','{2}')",V.Global.sWorkOrder, V.Global.sSuffix,v.Local.sExtraTextWO,v.Local.sSql)
+			f.ODBC.Connection!conx.Execute(v.Local.sSql)
+			
+				
+			'Comments below 000001
+			'Comment header in Job_Operations	
+			f.Intrinsic.String.Build("Select * from V_ROUTER_LINE where ROUTER = '{0}' and LMO = 'C' order by LINE_ROUTER asc",v.Local.sPart.Trim,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rstCHead",V.Local.sSQL)
+			F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstCHead.EOF,=,True)
+				v.Local.sDescRouter.Set("")
+				f.Intrinsic.String.Replace(v.ODBC.conx!rstCHead.FieldValTrim!Desc_RT_Line,"'","''",v.Local.sDescRouter)		
+				f.Intrinsic.String.Build("Insert into Job_Operations (job, suffix, seq, lmo, Description, router_seq) values ('{0}','{1}','{2}','C','{3}','000000')",V.Global.sWorkOrder, V.Global.sSuffix, v.ODBC.conx!rstCHead.FieldValTrim!Line_Router,v.Local.sDescRouter,v.Local.sSql)
+				F.ODBC.Connection!conx.Execute(V.Local.sSql)
+				F.ODBC.conx!rstCHead.MoveNext
+			f.Intrinsic.Control.Loop
+			f.ODBC.conx!rstCHead.Close
+				
+			'Comments details in WO_SEQ_COMMENTS
+			f.Intrinsic.String.Build("Select * FROM RTR_SEQ_COMMENTS WHERE RTR_NUMBER = '{0}' order by RTR_SEQ",v.Local.sPart.Trim,v.Local.sSql)
+			F.ODBC.Connection!conx.OpenRecordSetRO("rstComments",V.Local.sSQL)
+			F.Intrinsic.Control.DoUntil(V.ODBC.conx!rstComments.EOF,=,True)
+				v.Local.sDescRouterExtra.Set("")
+				f.Intrinsic.String.Replace(v.ODBC.conx!rstComments.FieldValTrim!Text,"'","''",v.Local.sDescRouterExtra)		
+				f.Intrinsic.String.Build("Insert into WO_SEQ_COMMENTS VALUES('{0}','{1}','{2}','{3}')",V.Global.sWorkOrder, V.Global.sSuffix, v.ODBC.conx!rstComments.FieldValTrim!RTR_SEQ,v.Local.sDescRouterExtra,v.Local.sSql)
+				F.ODBC.Connection!conx.Execute(V.Local.sSql)
+				F.ODBC.conx!rstComments.MoveNext
+			f.Intrinsic.Control.Loop
+			f.ODBC.conx!rstComments.Close		
+													
+			F.Intrinsic.Control.If(V.DataTable.Temp.RowCount, >, 0)
+				'THIS IS THE CLIENT SPECIFIC REQUIREMENT
+				Function.Intrinsic.Date.Dateadd ("D",1,v.Local.dDateDue,v.Local.dDateDue)
+				F.Intrinsic.String.Format(v.Local.dDateDue,"MMDDYY",v.Local.sDateDue)
+				F.Intrinsic.String.Build("{0}!*!{0}!*!{1}!*!{2}!*!!*!B", v.Local.sDateDue, v.Global.sWorkOrderMain, v.Global.sSuffix, V.Local.sParamSchedule)
+				F.Global.General.CallWrapperSync(500030, V.Local.sParamSchedule)
+			F.Intrinsic.Control.EndIf						
+					
+			F.Data.DataTable.Close("Temp")
+							
+		F.Intrinsic.Control.Next(V.Local.iIndex)
+		F.Data.DataTable.Merge("Temp0", "BaseWO", True, 2)
+	F.Intrinsic.Control.EndIf
+	
+	F.Data.DataTable.Close("Temp0")
+F.Intrinsic.Control.Next(V.Local.iCount)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("RouterInfo_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.createworkorder_level_2.End
+
+Program.Sub.SequenceCreator.Start
+F.Intrinsic.Control.SetErrorHandler("SequenceCreator_Err")
+F.Intrinsic.Control.ClearErrors
+
+v.Local.sError.Declare
+V.Local.sHold.Declare
+V.Local.sNewSeq.Declare
+v.Local.sOldSeq.Declare
+v.Local.sRet.Declare
+V.Local.sLine.Declare
+V.Local.sQty.Declare
+V.Local.sDate.Declare
+V.Local.sFilePath.Declare
+V.Local.sPart.Declare
+V.Local.sPartSeq.Declare
+V.Local.sJob.Declare
+V.Local.sUnits.Declare
+V.Local.sDateDue.Declare
+V.Local.sParam.Declare
+V.Local.sSql.Declare
+V.Local.sJobFilePath.Declare
+V.Local.sOperation.Declare
+V.Local.sDesc.Declare
+V.Local.sFiller.Declare
+V.Local.sSortCode.Declare
+V.Local.sProj.Declare
+V.Local.sSetup.Declare
+V.Local.sOverlap.Declare
+V.Local.sUnit.Declare
+V.Local.sBurden.Declare
+V.Local.sEsd.Declare
+V.Local.sRouter.Declare
+V.Local.sSuffix.Declare
+V.Local.sRuntime.Declare
+V.Local.sRate.Declare
+V.Local.sNewS.Declare
+V.Local.sFullText.Declare
+V.Local.iCount.Declare
+V.Local.iSeq.Declare
+V.Local.iHold.Declare
+v.Local.dDateHold.Declare(date)
+
+'build the JOBCOST.TXT file to generate the work order
+F.Intrinsic.String.Format(v.Ambient.Date, "MMDDYY", v.Local.sDate)
+
+F.Intrinsic.String.Build("{0}\JOBCOST.TXT",v.Caller.FilesDir,v.Local.sFilePath)
+
+'Setting the formatting for the .txt document
+F.Data.DataTable.AddColumn("BaseWO", "NewSeq", "String", "")
+
+'Creates file that will be read by _ to create sequences on the parent work orders to link up the children work orders
+F.Intrinsic.Control.For(V.Local.iCount, 0, V.DataTable.BaseWO.RowCount--, 1)
+	F.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).JOBDad!FieldVal, "0", 6, V.Local.sJob)
+	F.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).SUFFIXDAD!FieldVal, "0", 3, V.Local.sSuffix)
+	F.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).SEQ!FieldVal, "0", 6, V.Local.sOldSeq)
+
+	f.Intrinsic.String.Build("select Top 1 Seq FROM JOB_operations where job = '{0}' and suffix ='{1}' and Seq > '{2}'",V.Local.sJob,V.Local.sSuffix,v.Local.sOldSeq,v.Local.sSql)
+	
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,<>,True)	
+		v.Local.iSeq.Set(v.ODBC.conx!rst.FieldValTrim!Seq)	
+		f.Intrinsic.Math.Sub(v.Local.iSeq,1,v.Local.iSeq)
+		v.Local.sNewSeq.Set(v.Local.iSeq)
+		f.Intrinsic.String.LPad(v.Local.sNewSeq,"0",6,v.Local.sNewSeq)
+		Function.Data.DataTable.SetValue("BaseWO", v.Local.iCount, "NewSeq", v.Local.sNewSeq)		
+	f.Intrinsic.Control.EndIf
+	f.ODBC.conx!rst.Close
+		
+	F.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).NEWSEQ!FieldVal, "0", 6, V.Local.sNewS)
+	F.Intrinsic.String.LPad(V.DataTable.BaseWO(V.Local.iCount).JOB!FieldValTrim, "0", 6, V.Local.sPart)
+	F.Intrinsic.String.Build("{0}{1}", V.Local.sPart, V.DataTable.BaseWO(V.Local.iCount).Suffix!FieldVal, V.Local.sPart)
+
+	'JOB
+	v.Local.sLine.Set(v.Local.sJob)	
+	'SUFFIX	
+	F.Intrinsic.String.Concat(V.Local.sLine,V.Local.sSuffix,v.Local.sLine)	
+	'SEQ
+	F.Intrinsic.String.Concat(V.Local.sLine,V.Local.sNewS,v.Local.sLine)	
+	'OPERATION
+	F.Intrinsic.String.Concat(V.Local.sLine,"      ",v.Local.sLine)	
+	'FLAG_SET_UP
+	F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+	'LMO
+	F.Intrinsic.String.Concat(V.Local.sLine,"X",v.Local.sLine)	
+	
+	'PWC
+	f.Intrinsic.String.RPad(v.Local.sLine," ",55,v.Local.sLine)
+	F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sPart,v.Local.sLine)	
+
+	'SETUP 'customer always has 0 as SetUp
+	f.Intrinsic.String.RPad(v.Local.sLine," ",101,v.Local.sLine)
+	F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)				
+	
+	'Date
+	Function.Intrinsic.Date.ConvertDString (V.DataTable.BaseWO(V.Local.iCount).Date_Due!FieldValString, "MMDDYY", v.Local.dDateHold)
+	Function.Intrinsic.Date.Dateadd ("D",1,v.Local.dDateHold, v.Local.dDateHold)
+	F.Intrinsic.String.Format(v.Local.dDateHold,"MMDDYY",v.Local.sHold)
+	
+	'DATE_START	
+	f.Intrinsic.String.RPad(v.Local.sLine," ",165,v.Local.sLine)			
+	F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+	'DATE_DUE
+	F.Intrinsic.String.Concat(V.Local.sLine,v.Local.sHold,v.Local.sLine)	
+	
+	'TASK_COMP_REQ
+	f.Intrinsic.String.RPad(v.Local.sLine," ",233,v.Local.sLine)
+	F.Intrinsic.String.Concat(V.Local.sLine,"N",v.Local.sLine)	
+	'NO_ROUTER_UPDATE
+	F.Intrinsic.String.Concat(V.Local.sLine,"Y",v.Local.sLine)	
+	
+	f.Intrinsic.String.RPad(v.Local.sLine," ",251,v.Local.sLine)
+	
+	F.Intrinsic.String.Build("{0}{1}{2}",v.Local.sFullText, V.Local.sLine, V.Ambient.NewLine, v.Local.sFullText)	
+	
+F.Intrinsic.Control.Next(V.Local.iCount)
+
+F.Intrinsic.File.String2File(V.Local.sFilePath,V.Local.sFullText)
+F.Global.General.CallWrapperSync(50, "UPLJOBST/A/L")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("SequenceCreator_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+Program.Sub.SequenceCreator.End
+
+Program.Sub.PrintReports.Start
+
+F.Intrinsic.Control.SetErrorHandler("PrintReports_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare
+V.Local.sSql.Declare
+V.Local.sOrder.Declare
+V.Local.sLine.Declare
+V.Local.sWO.Declare
+V.Local.sWO2.Declare
+V.Local.sSuff.Declare
+V.Local.sSuff2.Declare
+V.Local.sCallParam.Declare
+V.Local.sHold.Declare
+V.Local.iCount.Declare(Long)
+
+v.Local.sOrder.Set(v.Passed.000060)
+V.Local.sLine.Set(V.Passed.000051)
+
+f.Intrinsic.String.LPad(v.Local.sOrder,"0",7,v.Local.sOrder)
+f.Intrinsic.String.LPad(v.Local.sLine,"0",3,v.Local.sLine)
+
+'Get the Work Order number generated from ORDER_TO_WO table
+F.Intrinsic.String.Build("Select Top 1 JOB from ORDER_TO_WO where ORDER_NO = '{0}'", V.Local.sOrder, v.Local.sSql)
+F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSql, V.Local.sHold)
+F.Intrinsic.Control.If(V.Local.sHold.TRIM, =, "")
+	F.Intrinsic.UI.Msgbox("WO was not created.")			
+	F.Intrinsic.Control.CallSub(unload)
+F.Intrinsic.Control.EndIf
+
+v.Global.sWorkOrderMain.Set(v.Local.sHold)
+
+'Create data table for all work orders following the pattern of a BOM
+F.Data.DataTable.Create("Print_WO")
+f.Data.DataTable.AddColumn("Print_WO","Job_Suffix","string","")
+f.Data.DataTable.AddColumn("Print_WO","Level","string","")
+
+f.Intrinsic.String.Concat(v.Global.sWorkOrderMain,v.Local.sLine,v.Local.sHold)
+f.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.Local.sHold,"Level","P")
+
+f.Intrinsic.String.Build("SELECT PART FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND LMO ='X' AND SUFFIX = '{1}' order by v_job_operations.seq",v.Global.sWorkOrderMain,v.Local.sLine,v.Local.sSql)
+F.ODBC.Connection!conx.OpenRecordSetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.DoUntil(V.ODBC.conx!rst.EOF,=,True)
+	'Explode level 0 to have level 1
+	f.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.ODBC.conx!rst.FieldValTrim!PART,"Level","C")
+	f.Intrinsic.String.left(v.ODBC.conx!rst.FieldValTrim!PART,6,v.Local.sWO)
+	f.Intrinsic.String.right(v.ODBC.conx!rst.FieldValTrim!PART,3,v.Local.sSuff)
+	f.Intrinsic.String.Build("SELECT PART FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND LMO ='X' AND SUFFIX = '{1}' order by v_job_operations.seq",v.Local.sWO,v.Local.sSuff,v.Local.sSql)
+	
+	F.ODBC.Connection!conx.OpenRecordSetRO("rst2",V.Local.sSQL)
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rst2.EOF,=,True)
+		'Explode level 1 to have level 3
+		f.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.ODBC.conx!rst2.FieldValTrim!PART,"Level","GC")
+
+		Function.ODBC.conx!rst2.Movenext
+	f.Intrinsic.Control.Loop
+	f.ODBC.conx!rst2.Close
+	Function.ODBC.conx!rst.Movenext
+f.Intrinsic.Control.Loop
+f.ODBC.conx!rst.Close
+
+'Verify and create folder	
+f.Intrinsic.Control.CallSub(check_and_create_print_folder)	
+f.Intrinsic.Control.CallSub(read_options)
+f.Intrinsic.Control.CallSub(create_parameters)
+		
+'Loop through the table and print reports
+F.Intrinsic.Control.For(V.Local.iCount, 0, V.DataTable.Print_WO.RowCount--, 1)
+	V.Local.sHold.Set(V.DataTable.Print_WO(V.Local.iCount).Job_Suffix!FieldValString)
+	f.Intrinsic.String.left(v.Local.sHold,6,v.Local.sWO)
+	f.Intrinsic.String.right(v.Local.sHold,3,v.Local.sSuff)
+	f.Intrinsic.String.Concat(V.Local.sWO,"!*!",V.Local.sSuff,"!*!","1811",V.Local.sCallParam)
+	F.Global.General.CallWrapperSync(900100,V.Local.sCallParam)
+	
+	'For merging PDF Later
+	F.Intrinsic.String.Build("{0}\{1}_{2}_{3}_{4}.pdf",V.Global.sWOsPrintedDir,v.Local.iCount,V.DataTable.Print_WO(V.Local.iCount).Level!FieldValString,v.Local.sWO,v.Local.sSuff,v.Global.sWOtoPrintPath)
+	f.Intrinsic.Control.If(v.Local.iCount,=,0)
+		v.Global.sFromParentToGrandChildPDF.Set(v.Global.sWOtoPrintPath)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.String.Concat(v.Global.sFromParentToGrandChildPDF,"*!*",v.Global.sWOtoPrintPath, v.Global.sFromParentToGrandChildPDF)
+	f.Intrinsic.Control.EndIf
+	
+	'Save PDF
+	Function.Global.BI.SaveReport("1811",1,v.Global.sParams,v.Global.sParamValues,v.Global.sWOtoPrintPath) 
+	
+	
+F.Intrinsic.Control.Next(V.Local.iCount)
+
+
+
+v.Local.sMergedFilePath.Declare(string)
+f.Intrinsic.Control.If(v.DataTable.Print_WO.RowCount,>,1)			
+	F.Intrinsic.String.Build("{0}\{1}_{2}_{3}.pdf",V.Global.sWOsPrintedDir,v.DataTable.Print_WO.RowCount,v.Global.sWorkOrderMain,v.Global.sSuffixMain,V.Local.sMergedFilePath)		
+	Function.Automation.PDF.Merge(v.Global.sFromParentToGrandChildPDF, v.Local.sMergedFilePath)
+f.Intrinsic.Control.EndIf
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("PrintReports_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+Program.Sub.PrintReports.End
+
+Program.Sub.Form_UnLoad.Start
+f.Intrinsic.Control.End
+
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.Check_And_Create_Print_Folder.Start
+F.Intrinsic.Control.SetErrorHandler("Check_And_Create_Print_Folder_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.bBarCode_WOsDirExist.Declare(boolean)
+
+F.Intrinsic.String.Build("{0}\BarCode_WOs",V.Caller.TempDir,V.Global.sBarCode_WOsPath)
+Function.Intrinsic.File.DirExists(v.Global.sBarCode_WOsPath, v.Local.bBarCode_WOsDirExist)
+f.Intrinsic.Control.If(v.Local.bBarCode_WOsDirExist,=,False)
+	Function.Intrinsic.File.CreateDir(v.Global.sBarCode_WOsPath)	
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.String.Format(v.Ambient.Date,"YYMMDD",v.Global.sDate)
+F.Intrinsic.String.Format(V.Ambient.Time,"HhNnSs",V.Global.sTime)
+F.Intrinsic.String.Build("{0}\{1}_{2}",V.Global.sBarCode_WOsPath,v.Global.sDate,v.Global.sTime,V.Global.sWOsPrintedDir)
+Function.Intrinsic.File.CreateDir(v.Global.sWOsPrintedDir)	
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Check_And_Create_Print_Folder_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Check_And_Create_Print_Folder.End
+
+Program.Sub.Read_Options.Start
+F.Global.General.ReadOption("400725",0,False,V.Global.bMatl)
+F.Global.General.ReadOption("400727",0,False,V.Global.bMatl)
+F.Global.General.ReadOption("400151",0,False,V.Global.bComment)
+Program.Sub.Read_Options.End
+
+Program.Sub.Create_Parameters.Start
+F.Intrinsic.Control.SetErrorHandler("Create_Parameters_Err")
+F.Intrinsic.Control.ClearErrors
+
+
+V.Local.sError.Declare(String)
+'sParams
+'F.Intrinsic.String.Split("Terminal*!*MATLBAR*!*OUTBAR*!*FGBAR*!*PROGRAM*!*REPORTID*!*COMMENTS","*!*",V.Global.sParams)
+
+'For custom report
+'F.Intrinsic.String.Split("Terminal*!*REPORTID*!*ProdOrFinish","*!*",V.Global.sParams)
+F.Intrinsic.String.Split("Terminal*!*MATLBAR*!*OUTBAR*!*FGBAR*!*PROGRAM*!*REPORTID*!*ProdOrFinish","*!*",V.Global.sParams)
+
+'sParamValues
+'F.Intrinsic.String.Build("{0}!*!{1}!*!{2}!*!False!*!BJ020LZ!*!001811!*!{3}",V.Caller.Terminal,V.Global.bMatl,V.Global.bOut,V.Global.bComment,V.Global.sParamValues)
+
+'For custom report
+v.Local.sProdOrFinish.Declare(string)
+f.Intrinsic.String.RPad(""," ",22,v.Local.sProdOrFinish)
+'F.Intrinsic.String.Build("{0}!*!001811!*!{1}",V.Caller.Terminal,v.Local.sProdOrFinish,V.Global.sParamValues)
+F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*False*!*BJ020LZ*!*001811*!*{3}",V.Caller.Terminal,V.Global.bMatl,V.Global.bOut,V.Local.sProdOrFinish,V.Global.sParamValues)
+
+F.Intrinsic.String.Split(V.Global.sParamValues,"*!*",V.Global.sParamValues)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Create_Parameters_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Create_Parameters.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$SKC$}$2/16/2017 2:00:55 PM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This will be a custom GAB script that will run from a custom Menu Item under Bill of Material -> File -> Custom Cobalt BOM Import.  The user will navigate to the xml file that needs to be loaded into Global Shop.  Once the xml is parsed there will be a search in Global Shop to see if a BOM already exists for that Part Number.  If one already exists a compare screen will display showing the differences between the two.  If one does not exist then the screen will display the BOM as it will be uploaded into Global Shop.  Any parts that are listed in the BOM that are not Inventory Parts will be highlighted in Yellow.  If there are any parts not in inventory the user will have the option to click the create Parts button to generate those parts in Global Shop.  If the BOM exists in Global shop then any differences on the new import will be highlighted in Red.  After the Parts have been created then the Upload button will upload and override any previous BOM for that part.
+Program.Sub.Comments.End
