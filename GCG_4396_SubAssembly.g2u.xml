@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SyntaxEdit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Pages>
+    <DefaultPage>
+      <Header />
+      <Footer />
+    </DefaultPage>
+  </Pages>
+  <DisplayStrings />
+  <Selection>
+    <SelectionRect>
+      <Location>
+        <X>0</X>
+        <Y>89</Y>
+      </Location>
+      <Size>
+        <Width>24</Width>
+        <Height>2</Height>
+      </Size>
+      <X>0</X>
+      <Y>89</Y>
+      <Width>24</Width>
+      <Height>2</Height>
+    </SelectionRect>
+    <Options>UseColors OverwriteBlocks SelectLineOnTripleClick CopyLineWhenEmpty SelectWordOnCtrlClick</Options>
+  </Selection>
+  <Gutter>
+    <Options>PaintLineNumbers PaintBookMarks PaintLineModificators</Options>
+  </Gutter>
+  <Margin>
+    <Visible>false</Visible>
+  </Margin>
+  <LineStyles />
+  <LineSeparator />
+  <Printing>
+    <Footer />
+    <Header />
+  </Printing>
+  <WhiteSpace />
+  <TextSource>
+    <Position>
+      <X>0</X>
+      <Y>89</Y>
+    </Position>
+    <Lexer>
+      <Scheme>
+        <Author>Quantum Whale, LLC.</Author>
+        <Copyright>Copyright (c) 2004 - 2014 Quantum Whale LLC.</Copyright>
+        <FileType>gas</FileType>
+        <Version>1.5</Version>
+        <Styles>
+          <Style>
+            <Name>idents</Name>
+            <ForeColor>ControlText</ForeColor>
+          </Style>
+          <Style>
+            <Name>numbers</Name>
+            <ForeColor>ControlText</ForeColor>
+          </Style>
+          <Style>
+            <Name>reswords</Name>
+            <ForeColor>Blue</ForeColor>
+          </Style>
+          <Style>
+            <Name>comments</Name>
+            <ForeColor>Green</ForeColor>
+            <PlainText>true</PlainText>
+          </Style>
+          <Style>
+            <Name>xmlcomments</Name>
+            <ForeColor>Gray</ForeColor>
+          </Style>
+          <Style>
+            <Name>symbols</Name>
+            <ForeColor>WindowText</ForeColor>
+          </Style>
+          <Style>
+            <Name>whitespace</Name>
+            <ForeColor>WindowText</ForeColor>
+          </Style>
+          <Style>
+            <Name>strings</Name>
+            <ForeColor>Maroon</ForeColor>
+            <PlainText>true</PlainText>
+          </Style>
+          <Style>
+            <Name>directives</Name>
+            <ForeColor>Blue</ForeColor>
+          </Style>
+          <Style>
+            <Name>htmlparams</Name>
+            <ForeColor>Red</ForeColor>
+          </Style>
+          <Style>
+            <Name>syntax errors</Name>
+            <ForeColor>Red</ForeColor>
+          </Style>
+          <Style>
+            <Name>codes nippets</Name>
+            <ForeColor>Black</ForeColor>
+            <BackColor>255:180:228:180</BackColor>
+          </Style>
+          <Style>
+            <Name>GabReservedWords</Name>
+            <ForeColor>Blue</ForeColor>
+          </Style>
+          <Style>
+            <Name>GabTokenWithBrackets</Name>
+            <ForeColor>Gray</ForeColor>
+          </Style>
+          <Style>
+            <Name>GabFunctionIntrinsicDebug</Name>
+            <ForeColor>White</ForeColor>
+            <BackColor>Red</BackColor>
+            <FontStyle>Bold</FontStyle>
+            <PlainText>true</PlainText>
+          </Style>
+          <Style>
+            <Name>GabVariable</Name>
+            <ForeColor>Teal</ForeColor>
+          </Style>
+          <Style>
+            <Name>GabVariableSystemDefined</Name>
+            <ForeColor>Teal</ForeColor>
+            <FontStyle>Bold Italic</FontStyle>
+          </Style>
+          <Style>
+            <Name>GabGui</Name>
+            <ForeColor>OrangeRed</ForeColor>
+          </Style>
+          <Style>
+            <Name>GabProgramSubStartEnd</Name>
+            <ForeColor>Black</ForeColor>
+            <BackColor>LightGray</BackColor>
+            <FontStyle>Bold</FontStyle>
+            <PlainText>true</PlainText>
+          </Style>
+        </Styles>
+      </Scheme>
+    </Lexer>
+    <TextStrings>
+      <Lines>
+        <string>Program.Sub.Preflight.Start</string>
+        <string />
+        <string>Program.Sub.Preflight.End</string>
+        <string />
+        <string>Program.Sub.Main.Start</string>
+        <string>V.Local..BulkDeclareString(sPart, sRev, sLoc, sParam, sOrder, sRet)</string>
+        <string>v.Local.fQty.Declare(Float)</string>
+        <string />
+        <string>F.ODBC.Connection!conx.OpenConnection(v.Ambient.PDSN, v.Ambient.PUser, v.Ambient.PPass)</string>
+        <string>f.Intrinsic.Control.If(v.Caller.Hook, =, "12410")</string>
+        <string>	v.Local.sPart.Set(v.Passed.000052)</string>
+        <string>	v.Local.sRev.Set(v.Passed.000053)</string>
+        <string>	v.Local.sLoc.Set(v.Passed.000054)</string>
+        <string>	v.Local.fQty.Set(v.Passed.000007)</string>
+        <string>	v.Local.sOrder.Set(v.Passed.000060)</string>
+        <string>	</string>
+        <string>F.Intrinsic.Debug.InvokeDebugger</string>
+        <string />
+        <string>F.Intrinsic.Debug.Stop</string>
+        <string />
+        <string>	F.Intrinsic.String.LPad(v.Local.sOrder, "0", 7, v.Local.sOrder)</string>
+        <string>	'a Work order needs to be created for this line of the sales order.  </string>
+        <string>	F.Intrinsic.String.Build("O!*!{0}", v.Local.sOrder, v.Local.sParam)</string>
+        <string>	F.Global.General.CallWrapperSync(200800, v.Local.sParam)</string>
+        <string>	F.Intrinsic.String.Split(v.Ambient.CallWrapperReturn, "*!*", v.Local.sRet)</string>
+        <string>	'Get the Work Order just created and check for manufactured to Job parts.</string>
+        <string>	F.Intrinsic.Control.CallSub(routerinfo, "Job", v.Local.sRet(34), "Suffix", v.Local.sRet(35))</string>
+        <string>	</string>
+        <string>	</string>
+        <string>F.Intrinsic.Control.EndIf</string>
+        <string>Program.Sub.Main.End</string>
+        <string />
+        <string>Program.Sub.Unload.Start</string>
+        <string>F.ODBC.Connection!conx.Close</string>
+        <string>F.Intrinsic.Control.End</string>
+        <string />
+        <string>Program.Sub.Unload.End</string>
+        <string />
+        <string>Program.Sub.RouterInfo.Start</string>
+        <string>v.Local..BulkDeclareString(sSql, sRet, sRow, sPartSeq)</string>
+        <string>V.Local.iCount.Declare(Long)</string>
+        <string />
+        <string>F.Intrinsic.String.Build("Select Job_Operations.Part, Job_Operations.Seq, Job_Operations.Units from Job_Operations Left Join INVENTORY_MST2 On INVENTORY_MST2.Part=Job_Operations.Part where Job = '{0}' and Suffix = '{1}' and LMO = 'M' and Seq &lt; '990000' and INVENTORY_MST2.code_Source = 'F'", v.Args.Job, v.Args.Suffix, v.Local.sSql)</string>
+        <string>F.ODBC.Connection!conx.ExecuteAndReturn(v.Local.sSql, v.Local.sRet)</string>
+        <string>F.Intrinsic.String.Split(v.Local.sRet, "#$#", v.Local.sRow)</string>
+        <string>'Get the Parts that need to have a work order created.  </string>
+        <string>F.Intrinsic.Control.For(v.Local.iCount, 0, v.Local.sRow.UBound, 1)</string>
+        <string>	F.Intrinsic.String.Split(v.Local.sRow(v.Local.iCount), "*!*", v.Local.sPartSeq)</string>
+        <string>	'Create a work order for this part</string>
+        <string>	F.Intrinsic.Control.CallSub(createworkorder, "Part", v.Local.sPartSeq(0), "Seq", v.Local.sPartSeq(1), "Units", v.Local.sPartSeq(2))</string>
+        <string>	'We need increment and insert the Link Sequence</string>
+        <string />
+        <string />
+        <string />
+        <string>F.Intrinsic.Control.Next(v.Local.iCount)</string>
+        <string />
+        <string />
+        <string />
+        <string>F.ODBC.Connection!Conx.GetID("JOB_HEADER","JOB",True,V.Local.sRet)</string>
+        <string />
+        <string>Program.Sub.RouterInfo.End</string>
+        <string />
+        <string>Program.Sub.CreateWorkOrder.Start</string>
+        <string>v.Local..BulkDeclareString(sRet, sLine, sQty, sDate, sFilePath)</string>
+        <string>'build the JBMDLA.TXT file to generate the work order</string>
+        <string>F.Intrinsic.String.Format(v.Ambient.Date, "MMDDYY", v.Local.sDate)</string>
+        <string>F.ODBC.Connection!Conx.GetID("JOB_HEADER","JOB",True,V.Local.sRet)</string>
+        <string>'Job</string>
+        <string>F.Intrinsic.String.LPad(v.Local.sRet, "0", 6, v.Local.sRet)</string>
+        <string>'Suffix Part</string>
+        <string>F.Intrinsic.String.Build("{0}000{1}", v.Local.sRet, v.Args.Part ,v.Local.sLine)</string>
+        <string>F.Intrinsic.String.RPad(v.Local.sLine, " ", 107, v.Local.sLine)</string>
+        <string>'Run Qty Date Opened</string>
+        <string>F.Intrinsic.String.LPad(v.Args.Units, "0", 16, v.Local.sQty)</string>
+        <string>F.Intrinsic.String.Build("{0}{1}{2}", v.Local.sLine, v.Local.sQty, v.Local.sDate, v.Local.sLine)</string>
+        <string>F.Intrinsic.String.RPad(v.Local.sLine, " ", 495, v.Local.sLine)</string>
+        <string />
+        <string>f.Intrinsic.String.Build("{0}\JBMDLA.TXT",v.Caller.FilesDir,v.Local.sFilePath)</string>
+        <string>F.Intrinsic.File.String2File(V.Local.sFilePath,V.Local.sLine)</string>
+        <string />
+        <string>F.Intrinsic.Debug.InvokeDebugger</string>
+        <string />
+        <string>F.Intrinsic.Debug.Stop</string>
+        <string />
+        <string>F.Global.General.CallWrappersync(50,"UPLJBMUL/A/L")</string>
+        <string />
+        <string />
+        <string>Program.Sub.CreateWorkOrder.End</string>
+        <string />
+        <string>Program.Sub.Comments.Start</string>
+        <string>${$0$}$$}$SKC$}$2/16/2017 2:00:55 PM$}$True</string>
+        <string>Program.Sub.Comments.End</string>
+      </Lines>
+    </TextStrings>
+  </TextSource>
+  <Scrolling>
+    <WindowOriginY>30</WindowOriginY>
+  </Scrolling>
+  <Outlining>
+    <AllowOutlining>true</AllowOutlining>
+    <ImageSize>8</ImageSize>
+    <Ranges>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>0</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>2</Y>
+        </EndPoint>
+        <Text>Program.Sub.Preflight</Text>
+        <DisplayText>Program.Sub.Preflight</DisplayText>
+        <Visible>false</Visible>
+        <Level>0</Level>
+      </Range>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>4</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>30</Y>
+        </EndPoint>
+        <Text>Program.Sub.Main</Text>
+        <DisplayText>Program.Sub.Main</DisplayText>
+        <Visible>true</Visible>
+        <Level>0</Level>
+      </Range>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>32</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>36</Y>
+        </EndPoint>
+        <Text>Program.Sub.Unload</Text>
+        <DisplayText>Program.Sub.Unload</DisplayText>
+        <Visible>false</Visible>
+        <Level>0</Level>
+      </Range>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>38</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>60</Y>
+        </EndPoint>
+        <Text>Program.Sub.RouterInfo</Text>
+        <DisplayText>Program.Sub.RouterInfo</DisplayText>
+        <Visible>true</Visible>
+        <Level>0</Level>
+      </Range>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>62</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>87</Y>
+        </EndPoint>
+        <Text>Program.Sub.CreateWorkOrder</Text>
+        <DisplayText>Program.Sub.CreateWorkOrder</DisplayText>
+        <Visible>true</Visible>
+        <Level>0</Level>
+      </Range>
+      <Range>
+        <StartPoint>
+          <X>0</X>
+          <Y>89</Y>
+        </StartPoint>
+        <EndPoint>
+          <X>2147483647</X>
+          <Y>91</Y>
+        </EndPoint>
+        <Text>Program.Sub.Comments</Text>
+        <DisplayText>Program.Sub.Comments</DisplayText>
+        <Visible>false</Visible>
+        <Level>0</Level>
+      </Range>
+    </Ranges>
+  </Outlining>
+  <HyperText />
+  <Spelling />
+  <Braces />
+</SyntaxEdit>
