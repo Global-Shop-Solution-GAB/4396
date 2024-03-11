@@ -1,0 +1,769 @@
+Program.Sub.ScreenSU.Start
+Gui.Form..Create
+Gui.Form..Caption("Custom - Select Work Orders to Print")
+Gui.Form..Size(7650,11100)
+Gui.Form..MinX(0)
+Gui.Form..MinY(0)
+Gui.Form..Position(0,0)
+Gui.Form..BackColor(-2147483633)
+Gui.Form..MousePointer(0)
+Gui.Form..Event(UnLoad,Form_UnLoad)
+Gui.Form.frameWO.Create(Frame)
+Gui.Form.frameWO.Size(5190,4785)
+Gui.Form.frameWO.Position(105,0)
+Gui.Form.chkWO.Create(CheckBox)
+Gui.Form.chkWO.Size(2130,360)
+Gui.Form.chkWO.Position(75,135)
+Gui.Form.chkWO.Parent("frameWO")
+Gui.Form.chkWO.Caption("Work Order Selection")
+Gui.Form.txtBegJob.Create(TextBox,"",True,615,300,0,165,1095,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtBegJob.Parent("frameWO")
+Gui.Form.txtBegJob.MaxLength(6)
+Gui.Form.txtBegSuffix.Create(TextBox,"",True,375,300,0,870,1095,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtBegSuffix.Parent("frameWO")
+Gui.Form.txtBegSuffix.MaxLength(3)
+Gui.Form.txtEndJob.Create(TextBox,"",True,615,300,0,2235,1095,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtEndJob.Parent("frameWO")
+Gui.Form.txtEndJob.MaxLength(6)
+Gui.Form.txtEndSuffix.Create(TextBox,"",True,375,300,0,2940,1095,True,0,"Arial",8,-2147483643,1)
+Gui.Form.txtEndSuffix.Parent("frameWO")
+Gui.Form.txtEndSuffix.MaxLength(3)
+Gui.Form.lbl1.Create(Label,"WO        Suffix",True,1245,255,0,180,840,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl1.Parent("frameWO")
+Gui.Form.lbl2.Create(Label,"WO        Suffix",True,1785,255,0,2235,855,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl2.Parent("frameWO")
+Gui.Form.cmdAdd.Create(Button)
+Gui.Form.cmdAdd.Size(720,375)
+Gui.Form.cmdAdd.Position(4335,1065)
+Gui.Form.cmdAdd.Parent("frameWO")
+Gui.Form.cmdAdd.Caption("Add")
+Gui.Form.cmdAdd.Event(Click,cmdAdd_Click)
+Gui.Form.gsWO.Create(GsGridControl)
+Gui.Form.gsWO.Size(4920,2250)
+Gui.Form.gsWO.Position(150,1905)
+Gui.Form.gsWO.Parent("frameWO")
+Gui.Form.gsWO.Event(RowCellClick,gsWO_RowCellClick)
+Gui.Form.cmdClear.Create(Button)
+Gui.Form.cmdClear.Size(855,375)
+Gui.Form.cmdClear.Position(135,4275)
+Gui.Form.cmdClear.Parent("frameWO")
+Gui.Form.cmdClear.Caption("Clear")
+Gui.Form.cmdClear.Event(Click,cmdClear_Click)
+Gui.Form.cmdBrowseBegWO.Create(Button)
+Gui.Form.cmdBrowseBegWO.Size(525,345)
+Gui.Form.cmdBrowseBegWO.Position(1335,1080)
+Gui.Form.cmdBrowseBegWO.Parent("frameWO")
+Gui.Form.cmdBrowseBegWO.Caption("^")
+Gui.Form.cmdBrowseBegWO.Event(Click,cmdBrowseBegWO_Click)
+Gui.Form.cmdBrowseEndWO.Create(Button)
+Gui.Form.cmdBrowseEndWO.Size(525,345)
+Gui.Form.cmdBrowseEndWO.Position(3390,1080)
+Gui.Form.cmdBrowseEndWO.Parent("frameWO")
+Gui.Form.cmdBrowseEndWO.Caption("^")
+Gui.Form.cmdBrowseEndWO.Event(Click,cmdBrowseEndWO_Click)
+Gui.Form.lbl6.Create(Label,"Beginning",True,1065,255,0,180,585,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl6.Parent("frameWO")
+Gui.Form.lbl7.Create(Label,"Ending",True,975,255,0,2235,585,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl7.Parent("frameWO")
+Gui.Form.lbl18.Create(Label,"Beginning",True,1155,255,0,420,1665,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl18.Parent("frameWO")
+Gui.Form.lbl19.Create(Label,"Ending",True,1260,255,0,2235,1665,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl19.Parent("frameWO")
+Gui.Form.frameDate.Create(Frame)
+Gui.Form.frameDate.Size(5190,1320)
+Gui.Form.frameDate.Position(90,4860)
+Gui.Form.chkDate.Create(CheckBox)
+Gui.Form.chkDate.Size(2610,360)
+Gui.Form.chkDate.Position(75,135)
+Gui.Form.chkDate.Parent("frameDate")
+Gui.Form.chkDate.Caption("Due Date Selection")
+Gui.Form.dtpBegDate.Create(DatePicker)
+Gui.Form.dtpBegDate.Size(1935,285)
+Gui.Form.dtpBegDate.Position(135,870)
+Gui.Form.dtpBegDate.Parent("frameDate")
+Gui.Form.dtpEndDate.Create(DatePicker)
+Gui.Form.dtpEndDate.Size(1935,285)
+Gui.Form.dtpEndDate.Position(3150,870)
+Gui.Form.dtpEndDate.Parent("frameDate")
+Gui.Form.lbl4.Create(Label,"End Due Date",True,1935,255,0,3150,645,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl4.Parent("frameDate")
+Gui.Form.lbl3.Create(Label,"Start Due Date",True,1935,255,0,135,645,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl3.Parent("frameDate")
+Gui.Form.lbl5.Create(Label,"Thru",True,450,255,0,2370,975,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl5.Parent("frameDate")
+Gui.Form.cmdOK.Create(Button)
+Gui.Form.cmdOK.Size(855,375)
+Gui.Form.cmdOK.Position(75,6855)
+Gui.Form.cmdOK.Caption("OK")
+Gui.Form.cmdOK.Event(Click,cmdOK_Click)
+Gui.Form.frame2.Create(Frame)
+Gui.Form.frame2.Size(390,1740)
+Gui.Form.frame2.Position(135,7680)
+Gui.Form.lbl11.Create(Label,"V",True,330,255,0,105,270,True,0,"Arial",7,-2147483633,0)
+Gui.Form.lbl11.Parent("frame2")
+Gui.Form.lbl12.Create(Label,"V",True,330,255,0,105,1260,True,0,"Arial",7,-2147483633,0)
+Gui.Form.lbl12.Parent("frame2")
+Gui.Form.frame3.Create(Frame)
+Gui.Form.frame3.Size(375,1740)
+Gui.Form.frame3.Position(525,7680)
+Gui.Form.lbl13.Create(Label,"V",True,330,255,0,105,270,True,0,"Arial",7,-2147483633,0)
+Gui.Form.lbl13.Parent("frame3")
+Gui.Form.lbl14.Create(Label,"V",True,330,255,0,105,750,True,0,"Arial",7,-2147483633,0)
+Gui.Form.lbl14.Parent("frame3")
+Gui.Form.frame1.Create(Frame)
+Gui.Form.frame1.Size(5115,555)
+Gui.Form.frame1.Position(135,7230)
+Gui.Form.lbl9.Create(Label,"Date",True,435,255,0,405,225,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl9.Parent("frame1")
+Gui.Form.lbl8.Create(Label,"WO",True,345,255,0,60,240,True,0,"Arial",7,-2147483633,0)
+Gui.Form.lbl8.Parent("frame1")
+Gui.Form.lbl10.Create(Label,"Description",True,1065,255,0,2415,225,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl10.Parent("frame1")
+Gui.Form.frame4.Create(Frame)
+Gui.Form.frame4.Size(4380,1755)
+Gui.Form.frame4.Position(870,7665)
+Gui.Form.lbl15.Create(Label,"Parent WO based on conditions, then its children and grandchildren WOs. Order printed as in router",True,4080,495,0,105,225,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl15.Parent("frame4")
+Gui.Form.lbl16.Create(Label,"Parent WO based on conditions, then its children and grandchildren WOs. Order printed as in router",True,4080,495,0,105,735,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl16.Parent("frame4")
+Gui.Form.lbl17.Create(Label,"Any WO selected. Order printed by Job, Suffix ascending",True,4080,495,0,60,1245,True,0,"Arial",8,-2147483633,0)
+Gui.Form.lbl17.Parent("frame4")
+Gui.Form.chkUnPrintedOnly.Create(CheckBox)
+Gui.Form.chkUnPrintedOnly.Size(1560,360)
+Gui.Form.chkUnPrintedOnly.Position(90,6330)
+Gui.Form.chkUnPrintedOnly.Caption("Unprinted Only")
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+v.Global..BulkDeclareString(sDate, sTime, sBarCode_WOsPath, sWOsPrintedDir, sWOtoPrintPath, sFromParentToGrandChildPDF, sAllWOsPDF, sAllWOsPDFPath, sParams, sParamValues, sCallParam)
+v.Global..BulkDeclareBoolean(bMatl,bComment, bOut)
+v.Global.iParentWOorder.Declare(long)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'BN May 12, 2017
+
+'This script will print the barcode work orders.
+'There are 3 cases:
+'a) If Due Date Selection is checked and Work Order Selection is not checked, we will pull all the parent work orders (Master work orders only) whose due date is in the due date selection, 
+'then also print the children and grandchildren of those parent work orders. The order of the work orders printed will follow the router.
+
+'b) If Due Date Selection and Work Order Selection are both checked, we will pull all the parent work orders (Master work orders only) which are in the Work Order Selection grid, and have the specified due date, 
+'then also print the children and grandchildren of those parent work orders. The order of the work orders printed will follow the router.
+
+'c) If Work Order Selection is checked and Due Date Selection is not checked, we will print all the work orders (no matter Master or Linked work orders) in the Work Order Selection grid. 
+'The order of the work orders printed will follow the Work Order number (job and suffix).
+
+'=========================================Specs=============================================================
+'In general, we use CallWrapperSync(900100,...1811...) and function.Global.BI.SaveReport(report 1811) right after. This way will pop up the Gss report viewer, and we have to close it before the Save function works. 
+'It works fine on both standard report (SF_BarCodeWO_Ext.rpt) and custom report (MBarCodeWO_Ext.rpt created by Glen Skidmore).
+
+'However, customer want the CallWrapperSync(900100,...) to be screenless, so we should use CallWrapperSyncBIO(900100,...). 
+'That way, the f.global.bi.SaveReport only works well together with CallWrapperSyncBIO(900100,...) when the report 1811 attached to the standard report (SF_BarCodeWO_Ext.rpt), 
+'otherwise, when it is attached to the custom report , it will generate and save blank report.
+
+'===========================================================================================================
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+F.ODBC.Connection!conx.OpenConnection(v.Ambient.PDSN, v.Ambient.PUser, v.Ambient.PPass)
+f.Intrinsic.Control.CallSub(create_wo_datatable)
+gui.Form..Show
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Form_UnLoad.Start
+F.Intrinsic.Control.SetErrorHandler("Form_UnLoad")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+f.ODBC.Connection!conx.Close
+f.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Form_UnLoad")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Form_UnLoad.End
+
+Program.Sub.Create_WO_DataTable.Start
+F.Intrinsic.Control.SetErrorHandler("Create_WO_DataTable_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+f.Data.DataTable.Create("WO",true)
+f.Data.DataTable.AddColumn("WO","BegJob","string","")
+f.Data.DataTable.AddColumn("WO","BegSuff","string","")
+f.Data.DataTable.AddColumn("WO","EndJob","string","")
+f.Data.DataTable.AddColumn("WO","EndSuff","string","")
+f.Data.DataTable.AddColumn("WO","Remove","string","Remove")
+
+Gui.Form.gsWO.AddGridViewFromDataTable("GV","WO")
+Gui.Form.gsWO.SetColumnProperty("GV","Remove", "ReadOnly", True)
+Gui.Form.gsWO.SetColumnProperty("GV","Remove","AllowEdit",false)
+
+Gui.Form.gsWO.MainView("GV")
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Create_WO_DataTable_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Create_WO_DataTable.End
+
+Program.Sub.cmdBrowseBegWO_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdBrowseBegWO_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+v.Local..BulkDeclareString(sError, sRet, sTemp, sTitles, iWidths)
+Function.Intrinsic.String.Split("Job*!*Suffix*!*Part*!*Description","*!*",variable.local.sTitles)
+Function.Intrinsic.String.Split("500*!*300*!*1200*!*2000","*!*",variable.local.iWidths)
+
+Function.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+Function.Intrinsic.UI.Browser("Select Work Order","conx","Select  Job, Suffix, Part, Description from V_Job_Header",Variable.Local.sTitles,Variable.Local.iWidths,Variable.Local.sRet)
+
+Function.Intrinsic.Control.If(Variable.Local.sRet,"=","***CANCEL***")
+ 	Function.Intrinsic.UI.Msgbox("No work order was selected!")
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.Else
+	f.Intrinsic.String.Split(v.Local.sret,"*!*",v.Local.sret)
+	gui.Form.txtBegJob.Text(v.Local.sret(0))
+	gui.Form.txtBegSuffix.Text(v.Local.sret(1))
+	gui.Form.txtEndJob.Text(v.Local.sret(0))
+	gui.Form.txtEndSuffix.Text(v.Local.sret(1))
+	gui.Form.txtEndJob.SetFocus
+f.Intrinsic.Control.EndIf
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdBrowseBegWO_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdBrowseBegWO_Click.End
+
+Program.Sub.cmdBrowseEndWO_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdBrowseEndWO_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+v.Local..BulkDeclareString(sError, sRet, sTemp, sTitles, iWidths)
+Function.Intrinsic.String.Split("Job*!*Suffix*!*Part*!*Description","*!*",variable.local.sTitles)
+Function.Intrinsic.String.Split("500*!*300*!*1200*!*2000","*!*",variable.local.iWidths)
+
+Function.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+Function.Intrinsic.UI.Browser("Select Work Order","conx","Select  Job, Suffix, Part, Description from V_Job_Header",Variable.Local.sTitles,Variable.Local.iWidths,Variable.Local.sRet)
+
+Function.Intrinsic.Control.If(Variable.Local.sRet,"=","***CANCEL***")
+ 	Function.Intrinsic.UI.Msgbox("No work order was selected!")
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.Else
+	f.Intrinsic.String.Split(v.Local.sret,"*!*",v.Local.sret)
+	gui.Form.txtEndJob.Text(v.Local.sret(0))
+	gui.Form.txtEndSuffix.Text(v.Local.sret(1))
+	gui.Form.cmdAdd.SetFocus
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdBrowseEndWO_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.cmdBrowseEndWO_Click.End
+
+Program.Sub.gsWO_RowCellClick.Start
+F.Intrinsic.Control.SetErrorHandler("Format_WO_Grid_Err")
+F.Intrinsic.Control.ClearErrors
+
+v.Local..BulkDeclareString(sError,sSQL)
+F.Intrinsic.Control.If(V.Args.Column,=,"Remove")
+	Function.Data.DataTable.DeleteRow("WO", v.Args.RowIndex)	
+Function.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Format_WO_Grid_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.gsWO_RowCellClick.End
+
+Program.Sub.cmdAdd_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdAdd_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+v.Local..BulkDeclareString(sError, sSQL, sBegJob, sBegSuff, sEndJob, sEndSuff, sBegWO, sEndWO)
+
+f.Intrinsic.Control.If(v.Screen.Form!txtBegJob.Text.Trim,=,"", or, v.Screen.Form!txtEndJob.Text.Trim,=,"")
+	f.Intrinsic.UI.Msgbox("Please select Beginning and Ending work orders.")
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.String.RPad(v.Screen.Form!txtBegJob.Text.Trim," ",6,v.Local.sBegJob)
+f.Intrinsic.String.RPad(v.Screen.Form!txtBegSuffix.Text.Trim," ",3,v.Local.sBegSuff)
+f.Intrinsic.String.RPad(v.Screen.Form!txtEndJob.Text.Trim," ",6,v.Local.sEndJob)
+f.Intrinsic.String.RPad(v.Screen.Form!txtEndSuffix.Text.Trim," ",3,v.Local.sEndSuff)
+
+f.Intrinsic.String.Build("Select job from V_job_header where job = '{0}' and suffix = '{1}'",v.Local.sBegJob,v.Local.sBegSuff,v.Local.sSQL)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	f.Intrinsic.UI.Msgbox("Invalid data. Check Beginning work order.")
+	F.ODBC.conX!rst.Close
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+f.Intrinsic.String.Build("Select job from V_job_header where job = '{0}' and suffix = '{1}'",v.Local.sEndJob,v.Local.sEndSuff,v.Local.sSQL)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	f.Intrinsic.UI.Msgbox("Invalid data. Check Ending work order.")
+	F.ODBC.conX!rst.Close
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+f.Intrinsic.String.Concat(v.Local.sBegJob,v.Local.sBegSuff,v.Local.sBegWO)
+f.Intrinsic.String.Concat(v.Local.sEndJob,v.Local.sEndSuff,v.Local.sEndWO)
+
+f.Intrinsic.String.Build("Select job+suffix as WO from V_Job_header where WO between '{0}' and '{1}'",v.Local.sBegWO, v.Local.sEndWO,v.Local.sSQL)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,True)
+	f.Intrinsic.UI.Msgbox("Invalid data. Check Ending work order must be after Beginning work order")
+	F.ODBC.conX!rst.Close
+	f.Intrinsic.Control.ExitSub
+f.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+f.Data.DataTable.AddRow("WO","BegJob",v.Local.sBegJob,"BegSuff",v.Local.sBegSuff,"EndJob",v.Local.sEndJob,"EndSuff",v.Local.sEndSuff,"Remove","Remove")
+gui.Form.txtBegJob.Text("")
+gui.Form.txtBegSuffix.Text("")
+gui.Form.txtEndJob.Text("")
+gui.Form.txtEndSuffix.Text("")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdAdd_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdAdd_Click.End
+
+Program.Sub.cmdClear_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdClear_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+f.Data.DataTable.Close("WO")
+f.Intrinsic.Control.CallSub(create_wo_datatable)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdClear_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdClear_Click.End
+
+Program.Sub.Check_And_Create_Print_Folder.Start
+F.Intrinsic.Control.SetErrorHandler("Check_And_Create_Print_Folder_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.bBarCode_WOsDirExist.Declare(boolean)
+
+F.Intrinsic.String.Build("{0}\BarCode_WOs",V.Caller.TempDir,V.Global.sBarCode_WOsPath)
+Function.Intrinsic.File.DirExists(v.Global.sBarCode_WOsPath, v.Local.bBarCode_WOsDirExist)
+f.Intrinsic.Control.If(v.Local.bBarCode_WOsDirExist,=,False)
+	Function.Intrinsic.File.CreateDir(v.Global.sBarCode_WOsPath)	
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.String.Format(v.Ambient.Date,"YYMMDD",v.Global.sDate)
+F.Intrinsic.String.Format(V.Ambient.Time,"HhNnSs",V.Global.sTime)
+F.Intrinsic.String.Build("{0}\{1}_{2}",V.Global.sBarCode_WOsPath,v.Global.sDate,v.Global.sTime,V.Global.sWOsPrintedDir)
+Function.Intrinsic.File.CreateDir(v.Global.sWOsPrintedDir)	
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Check_And_Create_Print_Folder_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Check_And_Create_Print_Folder.End
+
+Program.Sub.Read_Options.Start
+F.Global.General.ReadOption("400725",0,False,V.Global.bMatl)
+F.Global.General.ReadOption("400727",0,False,V.Global.bMatl)
+F.Global.General.ReadOption("400151",0,False,V.Global.bComment)
+Program.Sub.Read_Options.End
+
+Program.Sub.Create_Parameters.Start
+F.Intrinsic.Control.SetErrorHandler("Create_Parameters_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'For Standard Report (SF_BarCodeWO_Ext.rpt)
+'sParams
+'F.Intrinsic.String.Split("Terminal*!*MATLBAR*!*OUTBAR*!*FGBAR*!*PROGRAM*!*REPORTID*!*COMMENTS","*!*",V.Global.sParams)
+
+'For custom report Glen Skidmore (MBarCodeWO_Ext.rpt)
+'F.Intrinsic.String.Split("Terminal*!*REPORTID*!*ProdOrFinish","*!*",V.Global.sParams)
+F.Intrinsic.String.Split("Terminal*!*MATLBAR*!*OUTBAR*!*FGBAR*!*PROGRAM*!*REPORTID*!*ProdOrFinish","*!*",V.Global.sParams)
+
+'For Standard Report (SF_BarCodeWO_Ext.rpt)
+'sParamValues
+'F.Intrinsic.String.Build("{0}!*!{1}!*!{2}!*!False!*!BJ020LZ!*!001811!*!{3}",V.Caller.Terminal,V.Global.bMatl,V.Global.bOut,V.Global.bComment,V.Global.sParamValues)
+
+'For custom report Glen Skidmore (MBarCodeWO_Ext.rpt)
+v.Local.sProdOrFinish.Declare(string)
+f.Intrinsic.String.RPad(""," ",22,v.Local.sProdOrFinish)
+'F.Intrinsic.String.Build("{0}!*!001811!*!{1}",V.Caller.Terminal,v.Local.sProdOrFinish,V.Global.sParamValues)
+F.Intrinsic.String.Build("{0}*!*{1}*!*{2}*!*False*!*BJ020LZ*!*001811*!*{3}",V.Caller.Terminal,V.Global.bMatl,V.Global.bOut,V.Local.sProdOrFinish,V.Global.sParamValues)
+
+F.Intrinsic.String.Split(V.Global.sParamValues,"*!*",V.Global.sParamValues)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Create_Parameters_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Create_Parameters.End
+
+Program.Sub.cmdOK_Click.Start
+F.Intrinsic.Control.SetErrorHandler("cmdOK_Click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local..BulkDeclareString(sError, sSQL, sBegWO, sEndWO, sBegDate, sEndDate, sPrintedClause)
+v.Local..BulkDeclareLong(iCounter, i, iData)
+v.Local..BulkDeclareDate(dBegDate, dEndDate)
+
+F.Intrinsic.Control.If(V.Screen.Form!chkUnPrintedOnly.Value,=,1)
+	v.Local.sPrintedClause.Set(" and flag_wo_prtd = ''")
+F.Intrinsic.Control.Else
+	v.Local.sPrintedClause.Set("")
+f.Intrinsic.Control.EndIf
+
+v.Local.dBegDate.Set(v.Screen.Form!dtpBegDate.Value)
+v.Local.dEndDate.Set(v.Screen.Form!dtpEndDate.Value)
+f.Intrinsic.String.Format(v.Local.dBegDate,"YYYY-MM-DD",v.Local.sBegDate)
+f.Intrinsic.String.Format(v.Local.dEndDate,"YYYY-MM-DD",v.Local.sEndDate)
+f.ODBC.Connection!conx.Execute("Delete from GCG_4396_Print_WOs")
+
+'WO SELECTION IS UNCHECKED
+f.Intrinsic.Control.If(v.Screen.Form!chkWO.Value,=,0 )
+
+	'WO(0)_Date(1): WO Selection is unchecked _ Date Selection is unchecked
+	f.Intrinsic.Control.If(v.Screen.Form!chkDate.Value,=,0)
+		f.Intrinsic.UI.Msgbox("Please check Work Order selection or Due Date selection")
+		f.Intrinsic.Control.ExitSub
+		
+	'WO(0)_Date(1): WO Selection is unchecked _ Date Selection is checked	
+	f.Intrinsic.Control.Else
+	
+		f.Intrinsic.Control.If(v.Local.dBegDate,>,v.Local.dEndDate)
+			f.Intrinsic.UI.Msgbox("Beginning Date should not after Ending Date")
+			f.Intrinsic.Control.ExitSub
+		f.Intrinsic.Control.EndIf
+		
+		gui.Form..Visible(False)
+		f.Intrinsic.UI.InvokeWaitDialog("Processing...")		
+		f.Intrinsic.String.Build("Select Job+Suffix as WO, Job,Suffix, Job_Type as Type, Date_Due from V_JOB_HEADER where Type = 'M' and Date_Due between '{0}' and '{1}' {2} order by WO asc",v.Local.sBegDate,v.Local.sEndDate,v.Local.sPrintedClause,v.Local.sSQL)
+		f.Data.DataTable.CreateFromSQL("BASE_WO","conx",v.Local.sSQL,true)
+		
+		f.Intrinsic.Control.If(v.DataTable.BASE_WO.RowCount,<,1)
+			f.Intrinsic.UI.Msgbox("No Work Order having this condition found", "Date Selection")
+			f.Intrinsic.UI.CloseWaitDialog
+			f.Data.DataTable.Close("Base_WO")
+			gui.Form..Visible(True)
+			f.Intrinsic.Control.ExitSub		
+		f.Intrinsic.Control.EndIf
+		
+		f.Intrinsic.Control.CallSub(check_and_create_print_folder)
+		f.Intrinsic.Control.CallSub(read_options)
+		f.Intrinsic.Control.CallSub(create_parameters)		
+		
+		'Print WO Parent_Child_GrandChild		
+		f.Intrinsic.Control.For(v.Local.iCounter,0,v.DataTable.BASE_WO.RowCount--,1)
+			v.Global.iParentWOorder.Set(v.Local.iCounter)			
+			f.Intrinsic.Control.CallSub(printreports_parent_child_grandchild,"sWO",Variable.DataTable.BASE_WO(v.Local.iCounter).WO!FieldValString)			
+		F.Intrinsic.Control.Next(v.Local.iCounter)
+		'Merge all	
+		f.Intrinsic.Control.If(v.Global.iParentWOorder,>,0)
+			F.Intrinsic.String.Build("{0}\All_{1}_{2}.pdf",V.Global.sWOsPrintedDir,v.Local.sBegDate,v.Local.sEndDate,V.Global.sAllWOsPDFPath)		
+			Function.Automation.PDF.Merge(v.Global.sAllWOsPDF, V.Global.sAllWOsPDFPath)
+		f.Intrinsic.Control.EndIf		
+	f.Intrinsic.Control.EndIf
+
+'WO SELECTION IS CHECKED	
+f.Intrinsic.Control.Else
+	
+
+	f.Intrinsic.Control.If(v.DataTable.WO.RowCount,<,1)
+		f.Intrinsic.UI.Msgbox("Please add Work Orders to selection grid")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+
+	gui.Form..Visible(False)
+	f.Intrinsic.UI.InvokeWaitDialog("Processing...")
+	
+	'==========Pull WO numbers and save to GCG_4396_Print_WOs=======================
+	f.Data.DataView.Create("WO","WO_DT")
+	Function.Data.DataView.ToDataTable("WO", "WO_DT", "WO_Selected", true)	
+	
+	f.Intrinsic.Control.For(v.Local.iCounter,0,v.DataTable.WO_Selected.RowCount--,1)
+		f.Intrinsic.String.Concat(Variable.DataTable.WO_Selected(v.Local.iCounter).BegJob!FieldValString,Variable.DataTable.WO_Selected(v.Local.iCounter).BegSuff!FieldValString,v.Local.sBegWO)
+		f.Intrinsic.String.Concat(Variable.DataTable.WO_Selected(v.Local.iCounter).EndJob!FieldValString,Variable.DataTable.WO_Selected(v.Local.iCounter).EndSuff!FieldValString,v.Local.sEndWO)
+		f.Intrinsic.String.Build("Select job+suffix as WO, job, suffix, Job_Type as Type, Date_Due from V_Job_Header where WO between '{0}' and '{1}' {2}",v.Local.sBegWO,v.Local.sEndWO,v.Local.sPrintedClause,v.Local.sSQL)
+		f.Data.DataTable.CreateFromSQL("TempWOs","conx",v.Local.sSQL,true)
+		f.Data.DataTable.SaveToDB("TempWOs","conx","GCG_4396_Print_WOs", "", 128, "WO@!@WO*!*Job@!@Job*!*Suffix@!@Suffix*!*Type@!@Type*!*Date_Due@!@Date_Due")
+		f.Data.DataTable.Close("TempWOs")
+	f.Intrinsic.Control.Next(v.Local.iCounter)
+	'=========End pulling WOs number===============================================
+	
+	'==========Make WO in GCG_4396_Print_WOs distinct=======================
+	f.Data.DataTable.CreateFromSQL("DistinctWOs","conx","Select distinct WO, Job,Suffix, Type, Date_Due from GCG_4396_Print_WOs",true)
+	f.ODBC.Connection!conx.Execute("Delete from GCG_4396_Print_WOs")
+	f.Data.DataTable.SaveToDB("DistinctWOs","conx","GCG_4396_Print_WOs", "", 128, "WO@!@WO*!*Job@!@Job*!*Suffix@!@Suffix*!*Type@!@Type*!*Date_Due@!@Date_Due")
+	f.Data.DataTable.Close("DistinctWOs")
+	'==========End making distinct=======================
+	
+	'WO(1)_Date(1): WO Selection is checked _ Date Selection is checked
+	f.Intrinsic.Control.If(v.Screen.Form!chkDate.Value,=,1)
+
+		f.Intrinsic.String.Build("Select WO, Job,Suffix, Type, Date_Due from GCG_4396_Print_WOs where Type = 'M' and Date_Due between '{0}' and '{1}' order by WO asc",v.Local.sBegDate,v.Local.sEndDate,v.Local.sSQL)
+		f.Data.DataTable.CreateFromSQL("BASE_WO","conx",v.Local.sSQL,true)
+		
+		f.Intrinsic.Control.If(v.DataTable.BASE_WO.RowCount,<,1)
+			f.Intrinsic.UI.Msgbox("No Work Order having this condition found", "WO and Date Selection")
+			f.Intrinsic.UI.CloseWaitDialog
+			gui.Form..Visible(True)
+			f.Data.DataTable.Close("Base_WO")
+			f.Data.DataView.Close("WO","WO_DT")
+			f.Data.DataTable.Close("WO_Selected")
+			f.Intrinsic.Control.ExitSub		
+		f.Intrinsic.Control.EndIf
+				
+		f.Intrinsic.Control.CallSub(check_and_create_print_folder)
+		f.Intrinsic.Control.CallSub(read_options)
+		f.Intrinsic.Control.CallSub(create_parameters)
+		
+		'Print WO Parent_Child_GrandChild
+		f.Intrinsic.Control.For(v.Local.iCounter,0,v.DataTable.BASE_WO.RowCount--,1)
+			v.Global.iParentWOorder.Set(v.Local.iCounter)						
+			f.Intrinsic.Control.CallSub(printreports_parent_child_grandchild,"sWO",Variable.DataTable.BASE_WO(v.Local.iCounter).WO!FieldValString)		
+		F.Intrinsic.Control.Next(v.Local.iCounter)
+		'Merge all
+		f.Intrinsic.Control.If(v.Global.iParentWOorder,>,0)
+			F.Intrinsic.String.Build("{0}\All_{1}_{2}.pdf",V.Global.sWOsPrintedDir,v.Local.sBegDate,v.Local.sEndDate,V.Global.sAllWOsPDFPath)		
+			Function.Automation.PDF.Merge(v.Global.sAllWOsPDF, V.Global.sAllWOsPDFPath)
+		f.Intrinsic.Control.EndIf
+		
+	'WO(1)_Date(0): WO Selection is checked _ Date Selection is unchecked		
+	f.Intrinsic.Control.Else
+			
+		f.Data.DataTable.CreateFromSQL("BASE_WO","conx","Select WO, Job,Suffix, Type, Date_Due from GCG_4396_Print_WOs order by WO asc",true)
+		
+		'It is sure to have WOs records because Add button already validated this. So we can print here		
+		f.Intrinsic.Control.CallSub(check_and_create_print_folder)
+		f.Intrinsic.Control.CallSub(read_options)
+		f.Intrinsic.Control.CallSub(create_parameters)			
+		
+		'Print only WO selected, not including its children and grandchildren
+		f.Intrinsic.Control.For(v.Local.iCounter,0,v.DataTable.BASE_WO.RowCount--,1)
+		
+			f.Intrinsic.String.Concat(V.DataTable.BASE_WO(V.Local.iCounter).Job!FieldValString,"!*!",V.DataTable.BASE_WO(V.Local.iCounter).Suffix!FieldValString,"!*!","1811!*!NS",V.Global.sCallParam)
+			F.Intrinsic.String.Build("{0}\{1}_WO_{2}_{3}.pdf",v.Global.sWOsPrintedDir,v.Local.iCounter,V.DataTable.BASE_WO(V.Local.iCounter).Job!FieldValString,V.DataTable.BASE_WO(V.Local.iCounter).Suffix!FieldValString,v.Global.sWOtoPrintPath)
+			f.Intrinsic.Control.If(v.Local.iCounter,=,0)
+				v.Global.sFromParentToGrandChildPDF.Set(v.Global.sWOtoPrintPath)
+			f.Intrinsic.Control.Else
+				f.Intrinsic.String.Concat(v.Global.sFromParentToGrandChildPDF,"*!*",v.Global.sWOtoPrintPath, v.Global.sFromParentToGrandChildPDF)
+			f.Intrinsic.Control.EndIf	
+			
+			F.Global.General.CallWrapperSync(900100,V.Global.sCallParam)
+			
+			'If we use Async here, we have to delay the time by using these codes, in order to populate data for using SaveReport after this.
+'			f.Intrinsic.String.Build("select  count(*) from XMOG_BIBARDTL where Terminal = '{0}' and rptid = '001811' and job = '{1}' and suffix = '{2}'",v.Caller.Terminal,V.DataTable.BASE_WO(V.Local.iCounter).Job!FieldValString,V.DataTable.BASE_WO(V.Local.iCounter).Suffix!FieldValString, v.Local.sSQL)
+'			f.ODBC.Connection!conx.ExecuteAndReturn(v.Local.sSQL,v.Local.iData)
+'			f.Intrinsic.Control.DoUntil(v.Local.iData,>,0)
+'				f.ODBC.Connection!conx.ExecuteAndReturn(v.Local.sSQL,v.Local.iData)
+'			f.Intrinsic.Control.Loop			
+			
+			function.Global.BI.SaveReport("1811",1,v.Global.sParams,v.Global.sParamValues,v.Global.sWOtoPrintPath) 	
+			
+		F.Intrinsic.Control.Next(v.Local.iCounter)
+		
+		v.Local.sMergedFilePath.Declare(string)
+		f.Intrinsic.Control.If(v.DataTable.BASE_WO.RowCount,>,1)			
+			f.Intrinsic.String.Format(v.Ambient.Date,"YYMMDD",v.Global.sDate)
+			F.Intrinsic.String.Format(V.Ambient.Time,"HhNnSs",V.Global.sTime)		
+			F.Intrinsic.String.Build("{0}\{1}_WOs_Printed_at_{2}_{3}.pdf",V.Global.sWOsPrintedDir,v.DataTable.BASE_WO.RowCount,v.Global.sDate,v.Global.sTime,V.Local.sMergedFilePath)
+			Function.Automation.PDF.Merge(v.Global.sFromParentToGrandChildPDF, v.Local.sMergedFilePath)
+		f.Intrinsic.Control.EndIf			
+			
+	f.Intrinsic.Control.EndIf
+	
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.UI.CloseWaitDialog
+f.Intrinsic.Control.CallSub(form_unload)
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdOK_Click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Print_WorkOrders.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.cmdOK_Click.End
+
+Program.Sub.PrintReports_Parent_Child_GrandChild.Start
+F.Intrinsic.Control.SetErrorHandler("PrintReports_Parent_Child_GrandChild_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local..BulkDeclareString(sError, sSql,  sWO, sWO2, sSuff, sSuff2, sHold)
+V.Local.iCount.Declare(Long)
+v.Local..BulkDeclareString(sParentWO, sParentWODir)
+
+v.Local.sParentWO.Set(v.Args.sWO)
+
+'Create data table for all work orders following the pattern of a BOM
+F.Data.DataTable.Create("Print_WO")
+f.Data.DataTable.AddColumn("Print_WO","Job_Suffix","string","")
+f.Data.DataTable.AddColumn("Print_WO","Level","string","")
+F.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.Local.sParentWO,"Level","P")
+
+f.Intrinsic.String.Build("SELECT PART FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND LMO ='X' AND SUFFIX = '{1}' order by v_job_operations.seq",v.Local.sParentWO.left6, v.Local.sParentWO.right3,v.Local.sSql)
+F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+F.Intrinsic.Control.DoUntil(V.ODBC.conx!rst.EOF,=,True)
+	'Explode level 0 to have level 1
+	f.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.ODBC.conx!rst.FieldValTrim!PART,"Level","C")
+	f.Intrinsic.String.left(v.ODBC.conx!rst.FieldValTrim!PART,6,v.Local.sWO)
+	f.Intrinsic.String.right(v.ODBC.conx!rst.FieldValTrim!PART,3,v.Local.sSuff)
+	f.Intrinsic.String.Build("SELECT PART FROM V_JOB_OPERATIONS WHERE JOB = '{0}' AND LMO ='X' AND SUFFIX = '{1}' order by v_job_operations.seq",v.Local.sWO,v.Local.sSuff,v.Local.sSql)
+	
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst2",V.Local.sSQL)
+	F.Intrinsic.Control.DoUntil(V.ODBC.conx!rst2.EOF,=,True)
+		'Explode level 1 to have level 2
+		f.Data.DataTable.AddRow("Print_WO","Job_Suffix",v.ODBC.conx!rst2.FieldValTrim!PART,"Level","GC")
+
+		Function.ODBC.conx!rst2.Movenext
+	f.Intrinsic.Control.Loop
+	f.ODBC.conx!rst2.Close
+	Function.ODBC.conx!rst.Movenext
+f.Intrinsic.Control.Loop
+f.ODBC.conx!rst.Close
+		
+f.Intrinsic.String.Build("{0}\{1}_{2}",v.Global.sWOsPrintedDir,v.Local.sParentWO.left6,v.Local.sParentWO.right3,v.Local.sParentWODir)
+Function.Intrinsic.File.CreateDir(v.Local.sParentWODir)
+		
+'Loop through the table and print reports
+F.Intrinsic.Control.For(V.Local.iCount, 0, V.DataTable.Print_WO.RowCount--, 1)
+	
+	V.Local.sHold.Set(V.DataTable.Print_WO(V.Local.iCount).Job_Suffix!FieldValString)
+	f.Intrinsic.String.left(v.Local.sHold,6,v.Local.sWO)
+	f.Intrinsic.String.right(v.Local.sHold,3,v.Local.sSuff)
+	f.Intrinsic.String.Concat(V.Local.sWO,"!*!",V.Local.sSuff,"!*!","1811",V.Global.sCallParam)
+	
+	F.Intrinsic.String.Build("{0}\{1}_{2}_{3}_{4}.pdf",V.Local.sParentWODir,v.Local.iCount,V.DataTable.Print_WO(V.Local.iCount).Level!FieldValString,v.Local.sWO,v.Local.sSuff,v.Global.sWOtoPrintPath)
+	f.Intrinsic.Control.If(v.Local.iCount,=,0)
+	v.Global.sFromParentToGrandChildPDF.Set(v.Global.sWOtoPrintPath)
+	f.Intrinsic.Control.Else
+		f.Intrinsic.String.Concat(v.Global.sFromParentToGrandChildPDF,"*!*",v.Global.sWOtoPrintPath, v.Global.sFromParentToGrandChildPDF)
+	f.Intrinsic.Control.EndIf
+
+	F.Global.General.CallWrapperSync(900100,V.Global.sCallParam)
+	Function.Global.BI.SaveReport("1811",1,v.Global.sParams,v.Global.sParamValues,v.Global.sWOtoPrintPath) 
+
+f.Intrinsic.Control.Next(V.Local.iCount)
+
+v.Local.sMergedFilePath.Declare(string)
+f.Intrinsic.Control.If(v.DataTable.Print_WO.RowCount,>,1)			
+	f.Intrinsic.String.Format(v.Ambient.Date,"YYMMDD",v.Global.sDate)
+	F.Intrinsic.String.Format(V.Ambient.Time,"HhNnSs",V.Global.sTime)
+	F.Intrinsic.String.Build("{0}\{1}_{2}_{3}.pdf",V.Local.sParentWODir,v.DataTable.Print_WO.RowCount,v.Local.sParentWO.left6,v.Local.sParentWO.right3,V.Local.sMergedFilePath)		
+	Function.Automation.PDF.Merge(v.Global.sFromParentToGrandChildPDF, v.Local.sMergedFilePath)
+f.Intrinsic.Control.EndIf
+
+f.Intrinsic.Control.If(v.Global.iParentWOorder,=,0)
+	v.Global.sAllWOsPDF.Set(v.Local.sMergedFilePath)
+f.Intrinsic.Control.Else
+		f.Intrinsic.String.Concat(v.Global.sAllWOsPDF,"*!*",v.Local.sMergedFilePath, v.Global.sAllWOsPDF)
+f.Intrinsic.Control.EndIf
+
+f.Data.DataTable.Close("Print_WO")	
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("PrintReports_Parent_Child_GrandChild_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_SubAssembly.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.PrintReports_Parent_Child_GrandChild.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$5/8/2017 9:05:45 AM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$for SMS Millcraft, per quote 6044
+Import processed Invoice details, by branch location, as Invoice and/or Accrual Batches.  Batch IDs will be manually entered.
+Import files will have header, 001, and 002 records.
+Header layout is
+Row ID, Voucher#, Invoice Date, Invoice#, PO#, Vendor#, , Gross Amt, Tax,, Currency, Record Type, Date
+
+001 layout is
+Row ID, Voucher#, GL Company, Account, Line Amt
+
+002 layout is
+Row ID, Voucher#, PO#, Receipt#, Line#, Number, Reference, UM, Price, Qty, Line Amt
+
+Each 001 Record where a 002 record is found, and a PO# exists on the 002 record, are Invoice/Accruals and will be written to the Accrual Upload File. For Records with a matching PO, create only a single Invoice record.
+Each 001 Record without a PO# associated are Invoice, and will be written to the Invoice Upload File.
+
+Program.Sub.Comments.End
