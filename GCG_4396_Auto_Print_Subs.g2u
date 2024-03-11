@@ -1,0 +1,628 @@
+Program.Sub.Preflight.Start
+Program.External.Include.Library("GCG_4396_RouterUpload.lib")
+Variable.UDT.uJHeader.Define("JOB",String,JOB)
+Variable.UDT.uJHeader.Define("SUFFIX",String,SUFFIX)
+Variable.UDT.uJHeader.Define("PART",String,PART)
+Variable.UDT.uJHeader.Define("LOCATION",String,LOCATION)
+Variable.UDT.uJHeader.Define("ROUTER",String,ROUTER)
+Variable.UDT.uJHeader.Define("DESCRIPTION",String,DESCRIPTION)
+Variable.UDT.uJHeader.Define("CUSTOMER",String,CUSTOMER)
+Variable.UDT.uJHeader.Define("CUSTOMER_PO",String,CUSTOMER_PO)
+Variable.UDT.uJHeader.Define("DATE_OPENED",String,DATE_OPENED)
+Variable.UDT.uJHeader.Define("DATE_DUE",String,DATE_DUE)
+Variable.UDT.uJHeader.Define("DATE_START",String,DATE_START)
+Variable.UDT.uJHeader.Define("DATE_START_OTHER",String,DATE_START_OTHER)
+Variable.UDT.uJHeader.Define("COMMENTS_1",String,COMMENTS_1)
+Variable.UDT.uJHeader.Define("COMMENTS_2",String,COMMENTS_2)
+Variable.UDT.uJHeader.Define("SALESPERSON",String,SALESPERSON)
+Variable.UDT.uJHeader.Define("DATE_CLOSED",String,DATE_CLOSED)
+Variable.UDT.uJHeader.Define("PRODUCT_LINE",String,PRODUCT_LINE)
+Variable.UDT.uJHeader.Define("PART_DESCRIPTION",String,PART_DESCRIPTION)
+Variable.UDT.uJHeader.Define("PRIORITY",String,PRIORITY)
+Variable.UDT.uJHeader.Define("PROJECT",String,PROJECT)
+Variable.UDT.uJHeader.Define("COMMENTS_3",String,COMMENTS_3)
+Variable.UDT.uJHeader.Define("PARENT_WO",String,PARENT_WO)
+Variable.UDT.uJHeader.Define("PARENT_SUFFIX_PARENT",String,PARENT_SUFFIX_PARENT)
+Variable.UDT.uJHeader.Define("USERCODE",String)
+Variable.UDT.uJHeader.Define("AMT_PRICE_PER_UNIT",String,AMT_PRICE_PER_UNIT)
+Variable.UDT.uJHeader.Define("QTY_COMPLETED",String,QTY_COMPLETED)
+Variable.UDT.uJHeader.Define("QTY_CUSTOMER",String,QTY_CUSTOMER)
+Variable.UDT.uJHeader.Define("QTY_ORDER",String,QTY_ORDER)
+Variable.uGlobal.uJHeader.Declare("uJHeader")
+
+Variable.UDT.uJobOUPL.Define("JOB",String,JOB)
+Variable.UDT.uJobOUPL.Define("SUFFIX",String,SUFFIX)
+Variable.UDT.uJobOUPL.Define("SEQ",String,SEQ)
+Variable.UDT.uJobOUPL.Define("OPERATION",String,OPERATION)
+Variable.UDT.uJobOUPL.Define("FLAG_SET_UP",String,FLAG_SET_UP)
+Variable.UDT.uJobOUPL.Define("LMO",String,LMO)
+Variable.UDT.uJobOUPL.Define("DESCRIPTION",String,DESCRIPTION)
+Variable.UDT.uJobOUPL.Define("UM",String,UM)
+
+Variable.UDT.uJobOUPL.Define("PWC",String)
+Variable.UDT.uJobOUPL.Define("Machine1",String)
+Variable.UDT.uJobOUPL.Define("Machine2",String)
+Variable.UDT.uJobOUPL.Define("Machine3",String)
+Variable.UDT.uJobOUPL.Define("Machine4",String)
+Variable.UDT.uJobOUPL.Define("Machine5",String)
+
+Variable.UDT.uJobOUPL.Define("ROUTER",String,ROUTER)
+Variable.UDT.uJobOUPL.Define("ROUTER_SEQ",String,ROUTER_SEQ)
+Variable.UDT.uJobOUPL.Define("DATE_START",String,DATE_START)
+Variable.UDT.uJobOUPL.Define("DATE_DUE",String,DATE_DUE)
+Variable.UDT.uJobOUPL.Define("DATE_PO_ORDER",String,DATE_PO_ORDER)
+Variable.UDT.uJobOUPL.Define("SETUP",String,SETUP)
+Variable.UDT.uJobOUPL.Define("HOURS_ESTIMATED",String,HOURS_ESTIMATED)
+Variable.UDT.uJobOUPL.Define("RATE_PIECE",String,RATE_PIECE)
+Variable.UDT.uJobOUPL.Define("CODE_SORT_OPER",String,CODE_SORT_OPER)
+Variable.UDT.uJobOUPL.Define("PROJ_GROUP",String,PROJ_GROUP)
+Variable.UDT.uJobOUPL.Define("TASK_SIGNOFF_USER",String,TASK_SIGNOFF_USER)
+Variable.UDT.uJobOUPL.Define("TASK_COMP_REQ",String,TASK_COMP_REQ)
+Variable.UDT.uJobOUPL.Define("NO_ROUTER_UPDATE",String,NO_ROUTER_UPDATE)
+Variable.UDT.uJobOUPL.Define("OVERLAP",String,OVERLAP)
+Variable.UDT.uJobOUPL.Define("RATE_BURDEN",String,RATE_BURDEN)
+Variable.UDT.uJobOUPL.Define("RATE",String)
+Variable.uGlobal.uJobOUPL.Declare("uJobOUPL")
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Global.spart.Declare(String)
+v.Global.sjob.Declare(String)
+
+'open connection
+F.odbc.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+'if the populate hook is fired change the text of the script 1 button
+f.Intrinsic.Control.If(v.Caller.Hook,=,12010)
+	v.Passed.000162.Set("Print Subs")
+f.Intrinsic.Control.Elseif(v.Caller.Hook,=,12410)
+	'call the generate subroutine
+	f.Intrinsic.Control.CallSub(generate)	
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'close connection to the database
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.End
+
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Unload.End
+
+Program.Sub.Print.Start
+F.Intrinsic.Control.SetErrorHandler("Print_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.sprinter.Declare(String)
+
+V.Local.sprinter.Set(V.Printer.DefaultPrinter)
+'F.Intrinsic.Printer.SELECTPRINTERDIALOG
+'
+'F.Intrinsic.Control.If(V.Ambient.PrinterDialogSelection,<>,"***CANCEL***")
+'	F.Intrinsic.Printer.SetDefaultPrinter(V.Ambient.printerDialogSelection)
+'	F.Intrinsic.task.ShellExec(V.Caller.Handle,"PRINT",V.local.sTemp(2),"","",5)
+'
+'	F.Intrinsic.Printer.SetDefaultPrinter(V.Local.sprinter)
+'F.Intrinsic.Control.Else
+'	F.Intrinsic.Control.ExitSub
+'F.Intrinsic.Control.EndIf
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Print_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Print.End
+
+Program.Sub.Generate.Start
+F.Intrinsic.Control.SetErrorHandler("Generate_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.ix.Declare(Long)
+V.Local.sWO.Declare(String)
+V.Local.filename.Declare(String)
+V.Local.sfiledir.Declare(String)
+V.Local.shold.Declare(String)
+v.Local.sorder.Declare(string)
+v.Local.sline.Declare(String)
+v.Local.fpriceperpart.Declare(float)
+v.Local.spartdescsql.Declare(String)
+v.Local.spartdesc.Declare(String)
+v.Local.sret.Declare(string)
+v.Local.sjob.Declare(String)
+v.Local.sformatdate.Declare(String)
+v.Local.dformatdate.Declare(date)
+
+'redim
+V.uGlobal.uJHeader.redim(0,0)
+'set the order and line
+v.Local.sorder.Set(v.Passed.000060)
+f.Intrinsic.String.LPad(v.Local.sorder.Trim,"0",7,v.Local.sorder)
+v.Local.sline.Set(v.Passed.000051)
+f.Intrinsic.String.LPad(v.Local.sline.Trim,"0",3,v.Local.sline)
+f.Intrinsic.String.Build("{0}0",v.Local.sline.Trim,v.Local.sline)
+
+f.Intrinsic.UI.InvokeWaitDialog("Generating Work Orders...")
+
+'get the next 
+F.ODBC.Connection!Conx.GetID("JOB_HEADER","JOB",True,V.Local.sRet)
+
+'JOB, SUFFIX, PART, LOCATION, CUSTOMER_PO, DESCRIPTION, CUSTOMER, CUSTOMER_PO, RUN_QUANTITY(ORDER QTY), DATE_OPENED (DATE_ORDER), DATE_DUE, 
+''-Don't have yet ROUTER, DATE_START, DATE_START_OTHER, COMMENTS_1, COMMENTS_2, USERCODE, QTY_COMPLETED, PRICE PER PART (This will be a calculation QTY/PRICE), PART DESCRIPTION, PRIORITY, QTY_CUSTOMER, PROJECT, COMMENTS_3, PARENT_WO, PARENT_SUFFIX_PARENT
+F.Intrinsic.String.Build("select V_ORDER_LINES.JOB, V_ORDER_LINES.SUFFIX, V_ORDER_LINES.PART, V_ORDER_LINES.LOCATION,V_ORDER_LINES.PRODUCT_LINE, V_ORDER_LINES.PRICE, V_ORDER_LINES.DESCRIPTION, V_ORDER_LINES.CUSTOMER, V_ORDER_LINES.QTY_ORDERED as RUN_QTY, V_ORDER_LINES.DATE_ORDER as DATE_OPENED, V_ORDER_HEADER.DATE_DUE, V_ORDER_HEADER.CUSTOMER_PO, V_ORDER_HEADER.SALESPERSON from V_ORDER_LINES inner join V_ORDER_HEADER on V_ORDER_LINES.ORDER_NO = V_ORDER_HEADER.ORDER_NO where V_ORDER_LINES.ORDER_NO = '{0}' and V_ORDER_LINES.RECORD_NO = '{1}'",V.Local.sorder.Trim,v.Local.sline.Trim,v.Local.sSql)
+f.Data.DataTable.CreateFromSQL("ORDER","conx",v.Local.sSql)
+F.intrinsic.control.for(V.Local.ix,0,v.dataTable.ORDER.RowCount--,1)
+	v.uGlobal.uJHeader.RedimPreserve(0,v.Local.ix)
+''JOB
+	F.Intrinsic.String.RPad(v.Local.sret.Trim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	v.Global.sjob.Set(v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim)
+	V.uGlobal.uJHeader(V.Local.ix)!JOB.set(V.local.shold)
+'SUFFIX
+	F.Intrinsic.String.RPad(000," ",3,V.Local.shold)
+'	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).SUFFIX.fieldvaltrim," ",3,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,3,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!SUFFIX.set(V.local.shold)
+'PART
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim," ",20,V.Local.shold)
+	v.Global.spart.Set(v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PART.set(V.local.shold)
+'LOCATION
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).LOCATION.fieldvaltrim," ",2,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,2,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!LOCATION.set(V.local.shold)
+'ROUTER- blank
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim," ",20,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!ROUTER.set(V.local.shold)
+'DESCRIPTION
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).DESCRIPTION.fieldvaltrim," ",30,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,30,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DESCRIPTION.set(V.local.shold)
+'CUSTOMER
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).CUSTOMER.fieldvaltrim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!CUSTOMER.set(V.local.shold)
+'CUSTOMER_PO
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).CUSTOMER_PO.fieldvaltrim," ",20,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!CUSTOMER_PO.set(V.local.shold)
+'Run Quantity
+	F.Intrinsic.String.Format(v.DataTable.ORDER(v.Local.ix).RUN_QTY.fieldvaltrim,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!QTY_ORDER.set(V.local.shold)
+'DATE_OPENED
+	v.Local.dformatdate.Set(v.DataTable.ORDER(v.Local.ix).DATE_OPENED.fieldvaltrim)
+	f.Intrinsic.String.Format(v.Local.dformatdate,"MMDDYY",v.Local.sformatdate)
+	F.Intrinsic.String.RPad(v.Local.sformatdate," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DATE_OPENED.set(V.local.shold)
+'DATE_DUE
+	v.Local.dformatdate.Set(v.DataTable.ORDER(v.Local.ix).DATE_DUE.fieldvaltrim)
+	f.Intrinsic.String.Format(v.Local.dformatdate,"MMDDYY",v.Local.sformatdate)
+	F.Intrinsic.String.RPad(v.Local.sformatdate," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DATE_DUE.set(V.local.shold)
+'DATE_START - BLANK
+	F.Intrinsic.String.RPad(""," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DATE_START.set(V.local.shold)
+'DATE_START_OTHER - BLANK
+	F.Intrinsic.String.RPad(""," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DATE_START_OTHER.set(V.local.shold)
+'COMMENTS_1 - BLANK
+	F.Intrinsic.String.RPad(""," ",70,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,70,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!COMMENTS_1.set(V.local.shold)
+'COMMENTS_2 - BLANK
+	F.Intrinsic.String.RPad(""," ",70,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,70,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!COMMENTS_2.set(V.local.shold)
+'USERCODE
+	F.Intrinsic.String.RPad(v.Caller.User.trim," ",30,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,30,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!USERCODE.set(V.local.shold)
+'QTY_COMPLETED - SET AS 0
+	F.Intrinsic.String.Format("0.0000","0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!QTY_COMPLETED.set(V.local.shold)
+'SALESPERSON
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).SALESPERSON.fieldvaltrim," ",3,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,3,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!SALESPERSON.set(V.local.shold)
+'DATE_CLOSED - BLANK
+	F.Intrinsic.String.RPad(""," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!DATE_CLOSED.set(V.local.shold)
+'PRODUCT_LINE
+	F.Intrinsic.String.RPad(v.DataTable.ORDER(v.Local.ix).PRODUCT_LINE.fieldvaltrim," ",2,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,2,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PRODUCT_LINE.set(V.local.shold)
+'AMT_PRICE_PER_UNIT	
+	'divide the price by the number of parts
+	v.Local.fpriceperpart.Set(v.DataTable.ORDER(v.Local.ix).PRICE.fieldvaltrim)
+	f.Intrinsic.Math.Div(v.Local.fpriceperpart,v.DataTable.ORDER(v.Local.ix).RUN_QTY.fieldvaltrim,v.Local.fpriceperpart)
+	F.Intrinsic.String.Format(v.Local.fpriceperpart,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!AMT_PRICE_PER_UNIT.set(V.local.shold)
+'QTY_CUSTOMER - SET AT 0
+	F.Intrinsic.String.Format("0.0000","0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!QTY_CUSTOMER.set(V.local.shold)
+	'query for the part description
+	f.Intrinsic.String.Build("Select DESCRIPTION from V_INVENTORY_MSTR where PART = '{0}' and LOCATION = '{1}'",v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim,v.DataTable.ORDER(v.Local.ix).LOCATION.fieldvaltrim,v.Local.spartdescsql)
+	F.ODBC.Connection!conx.OpenLocalRecordsetRO("rstpartdesc",V.Local.spartdescSql)
+	F.Intrinsic.Control.If(v.ODBC.conx!rstpartdesc.eof,=,False)
+		v.Local.spartdesc.Set(v.ODBC.conx!rstpartdesc.FieldValTrim!DESCRIPTION)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conx!rstpartdesc.Close
+'PART_DESCRIPTION
+	F.Intrinsic.String.RPad(v.Local.spartdesc.Trim," ",30,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,30,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PART_DESCRIPTION.set(V.local.shold)
+'PRIORITY - BLANK
+	F.Intrinsic.String.RPad(""," ",3,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,3,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PRIORITY.set(V.local.shold)
+'PROJECT - BLANK
+	F.Intrinsic.String.RPad(""," ",7,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,7,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PROJECT.set(V.local.shold)
+'COMMENTS_3 - BLANK
+	F.Intrinsic.String.RPad(""," ",70,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,70,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!COMMENTS_3.set(V.local.shold)
+'PARENT_WO - BLANK
+	F.Intrinsic.String.RPad(""," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PARENT_WO.set(V.local.shold)
+'PARENT_SUFFIX_PARENT - BLANK
+	F.Intrinsic.String.RPad(""," ",3,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,3,V.Local.shold)
+	V.uGlobal.uJHeader(V.Local.ix)!PARENT_SUFFIX_PARENT.set(V.local.shold)
+'CLEAR THE PART DESCRIPTION AND SET PRICE PER UNIT TO 0
+	v.Local.spartdesc.Set("")
+	v.Local.fpriceperpart.Set(0)	
+	v.Local.sformatdate.Set("")
+F.Intrinsic.Control.Next(V.Local.ix)
+
+'BUILD THE FILE FOR THE UPLOAD
+F.Intrinsic.Control.For(V.Local.ix,V.uGlobal.uJHeader.LBound,V.uglobal.uJHeader.UBound,1)
+	v.Local.sjob.Set(V.uGlobal.uJHeader(v.Local.ix)!JOB)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJHeader(v.Local.ix)!JOB,V.uGlobal.uJHeader(v.Local.ix)!SUFFIX,V.uGlobal.uJHeader(v.Local.ix)!PART,V.uGlobal.uJHeader(v.Local.ix)!LOCATION,V.uGlobal.uJHeader(v.Local.ix)!ROUTER,V.uGlobal.uJHeader(v.Local.ix)!DESCRIPTION,v.Local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJHeader(v.Local.ix)!CUSTOMER,V.uGlobal.uJHeader(v.Local.ix)!CUSTOMER_PO,V.uGlobal.uJHeader(v.Local.ix)!QTY_ORDER,V.uGlobal.uJHeader(v.Local.ix)!DATE_OPENED,V.uGlobal.uJHeader(v.Local.ix)!DATE_DUE,V.uGlobal.uJHeader(v.Local.ix)!DATE_START,v.Local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJHeader(v.Local.ix)!DATE_START_OTHER,V.uGlobal.uJHeader(v.Local.ix)!COMMENTS_1,V.uGlobal.uJHeader(v.Local.ix)!COMMENTS_2,V.uGlobal.uJHeader(v.Local.ix)!USERCODE,V.uGlobal.uJHeader(v.Local.ix)!QTY_COMPLETED,V.uGlobal.uJHeader(v.Local.ix)!SALESPERSON,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJHeader(v.Local.ix)!DATE_CLOSED,V.uGlobal.uJHeader(v.Local.ix)!PRODUCT_LINE,V.uGlobal.uJHeader(v.Local.ix)!AMT_PRICE_PER_UNIT,V.uGlobal.uJHeader(v.Local.ix)!QTY_CUSTOMER,V.uGlobal.uJHeader(v.Local.ix)!PART_DESCRIPTION,V.uGlobal.uJHeader(v.Local.ix)!PRIORITY,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}",V.Local.sWO,V.uGlobal.uJHeader(v.Local.ix)!PROJECT,V.uGlobal.uJHeader(v.Local.ix)!COMMENTS_3,V.uGlobal.uJHeader(v.Local.ix)!PARENT_WO,V.uGlobal.uJHeader(v.Local.ix)!PARENT_SUFFIX_PARENT,V.local.sWO)
+F.Intrinsic.Control.Next(V.Local.ix)
+'CREATE THE FILE AND CALL THE UPLOAD
+f.Intrinsic.String.Build("{0}\JBMDLA.TXT",v.Caller.FilesDir,v.Local.sfiledir)
+F.Intrinsic.File.String2File(V.Local.sfiledir,V.Local.sWO)
+F.Global.General.CallWrappersync(50,"UPLJBMUL/A/L")
+
+'get the job created
+'call the JOB COST upload sub
+f.Intrinsic.control.CallSub(jobcost,"Job",v.Local.sjob)
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Label("Generate_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Generate.End
+
+Program.Sub.JOBCOST.Start
+F.Intrinsic.Control.SetErrorHandler("JOBCOST_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.ix.Declare(Long)
+V.Local.sWO.Declare(String)
+V.Local.filename.Declare(String)
+V.Local.filedir.Declare(String)
+V.Local.shold.Declare(String)
+v.Local.sjob.Declare(String)
+v.Local.sinc.Declare(string)
+v.Local.spart.Declare(String)
+v.Local.sloc.Declare(String)
+v.Local.sfiledir.Declare(STring)
+v.Local.dformatdate.Declare(date)
+v.Local.sformatdate.Declare(String)
+v.Local.srouterquery.Declare(string)
+v.Local.iseq.Declare(long,0)
+v.Local.sseq.Declare(String)
+
+'get the sequence incrementation from their company options and set a local variable
+F.Intrinsic.String.Build("select F_LONG from V_OP_HEADER where ID = '{0}'","401113",V.Local.sinc)
+F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.sinc)
+F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+	V.Local.sinc.Set(V.ODBC.conx!rst.FieldValTrim!F_LONG)
+F.Intrinsic.Control.EndIf
+F.ODBC.Conx!rst.Close
+'pad the increment
+f.Intrinsic.String.LPad(v.Local.sinc.Trim,"0",6,v.Local.sinc)
+'set the job
+v.Local.sjob.Set(v.Args.JOB)
+V.uGlobal.uJobOUPL.redim(0,0)
+
+'query for the information for the JOBCOST upload
+f.Intrinsic.String.Build("Select V_ROUTER_LINE.ROUTER, V_ROUTER_LINE.LINE_ROUTER, V_ROUTER_LINE.UM_INVENTORY, V_ROUTER_LINE.LMO, V_ROUTER_LINE.SORT_CODE, V_ROUTER_LINE.PROJ_GROUP, V_ROUTER_LINE.SIGNOFF_GRPUSR, V_ROUTER_LINE.OVERLAP, V_ROUTER_LINE.SET_UP, V_ROUTER_LINE.RATE, V_ROUTER_LINE.PART_WC_OUTSIDE, V_ROUTER_LINE.LINE_ROUTER, V_ROUTER_LINE.OPERATION, V_JOB_HEADER.JOB, V_JOB_HEADER.SUFFIX, V_JOB_HEADER.PART, V_JOB_HEADER.LOCATION, V_JOB_HEADER.ROUTER, V_JOB_HEADER.DESCRIPTION, V_JOB_HEADER.DATE_START, V_JOB_HEADER.DATE_DUE from V_ROUTER_LINE inner join V_JOB_HEADER on V_ROUTER_LINE.ROUTER = V_JOB_HEADER.ROUTER where V_JOB_HEADER.JOB = '{0}'",v.Local.sjob.Trim,v.Local.sSql)
+f.Data.DataTable.CreateFromSQL("JOBCOST","conx",v.Local.sSql)
+F.intrinsic.control.for(V.Local.ix,0,v.dataTable.JOBCOST.RowCount--,1)
+	v.uGlobal.uJobOUPL.RedimPreserve(0,v.Local.ix)
+' JOB
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).JOB.fieldvaltrim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!JOB.set(V.local.shold)
+'SUFFIX
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).SUFFIX.fieldvaltrim," ",3,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,3,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!SUFFIX.set(V.local.shold)
+	
+	'increment the sequence number if need be
+	f.Intrinsic.Control.If(v.Local.iseq,>,0)
+		f.Intrinsic.Math.Add(v.Local.iseq,1,v.Local.iseq)
+		v.Local.sseq.Set(v.Local.iseq)
+	f.Intrinsic.Control.Else
+		v.Local.sseq.Set("000000")
+		f.Intrinsic.Math.Add(v.Local.iseq,1,v.Local.iseq)
+	f.Intrinsic.Control.EndIf
+	v.Local.sseq.Set(v.Local.iseq)
+	f.Intrinsic.String.LPad(v.Local.sseq,"0",6,v.Local.sseq)
+'SEQ
+	F.Intrinsic.String.RPad(v.Local.sseq," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!SEQ.set(V.local.shold)
+'OPERATION
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).OPERATION.fieldvaltrim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!OPERATION.set(V.local.shold)
+'FLAG_SET_UP - BLANK
+	F.Intrinsic.String.RPad(""," ",1,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,1,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!FLAG_SET_UP.set(V.local.shold)
+'LMO
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).LMO.fieldvaltrim," ",1,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,1,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!LMO.set(V.local.shold)
+'DESCRIPTION
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).DESCRIPTION.fieldvaltrim," ",30,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,30,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!DESCRIPTION.set(V.local.shold)
+'UM - BLANK
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).UM_INVENTORY.fieldvaltrim," ",2,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,2,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!UM.set(V.local.shold)
+'PWC - BLANK
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).PART_WC_OUTSIDE.fieldvaltrim," ",20,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!PWC.set(V.local.shold)
+'ROUTER
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).ROUTER.fieldvaltrim," ",20,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!ROUTER.set(V.local.shold)
+'ROUTER_SEQ 
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).LINE_ROUTER.fieldvaltrim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!ROUTER_SEQ.set(V.local.shold)
+'SETUP 
+	F.Intrinsic.String.Format(v.DataTable.JOBCOST(v.Local.ix).SET_UP.fieldvaltrim,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!SETUP.set(V.local.shold)
+'RATE_PIECE 
+	F.Intrinsic.String.Format(v.DataTable.JOBCOST(v.Local.ix).RATE.fieldvaltrim,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!RATE_PIECE.set(V.local.shold)
+'BURDEN RATE - 0
+	F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!RATE_BURDEN.set(V.local.shold)
+'HOURS_ESTIMATED - 0
+	F.Intrinsic.String.Format("0","0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!HOURS_ESTIMATED.set(V.local.shold)
+'DATE_START
+	v.Local.dformatdate.Set(v.DataTable.JOBCOST(v.Local.ix).DATE_START.fieldvaltrim)
+	f.Intrinsic.String.Format(v.Local.dformatdate,"MMDDYY",v.Local.sformatdate)
+	F.Intrinsic.String.RPad(v.Local.sformatdate," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!DATE_START.set(V.local.shold)
+'DATE_DUE
+	v.Local.dformatdate.Set(v.DataTable.JOBCOST(v.Local.ix).DATE_DUE.fieldvaltrim)
+	f.Intrinsic.String.Format(v.Local.dformatdate,"MMDDYY",v.Local.sformatdate)
+	F.Intrinsic.String.RPad(v.Local.sformatdate," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!DATE_DUE.set(V.local.shold)
+'DATE_PO_ORDER
+	F.Intrinsic.String.RPad(""," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!DATE_PO_ORDER.set(V.local.shold)
+'RATE
+	F.Intrinsic.String.Format(v.DataTable.JOBCOST(v.Local.ix).RATE.fieldvaltrim,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!RATE.set(V.local.shold)
+'CODE_SORT_OPER
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).SORT_CODE.fieldvaltrim," ",20,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,20,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!CODE_SORT_OPER.set(V.local.shold)
+'PROJ_GROUP 
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).PROJ_GROUP.fieldvaltrim," ",6,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!PROJ_GROUP.set(V.local.shold)
+'TASK_SIGNOFF_USER 
+	F.Intrinsic.String.RPad(v.DataTable.JOBCOST(v.Local.ix).SIGNOFF_GRPUSR.fieldvaltrim," ",8,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,8,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!TASK_SIGNOFF_USER.set(V.local.shold)
+'TASK_COMP_REQ - BLANK
+	F.Intrinsic.String.RPad(""," ",1,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,1,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!TASK_COMP_REQ.set(V.local.shold)
+'NO_ROUTER_UPDATE - BLANK
+	F.Intrinsic.String.RPad(""," ",1,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,1,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!NO_ROUTER_UPDATE.set(V.local.shold)
+''OVERLAP - BLANK
+	F.Intrinsic.String.Format(v.DataTable.JOBCOST(v.Local.ix).OVERLAP.fieldvaltrim,"0.0000",V.Local.shold)
+	F.Intrinsic.String.LPad(V.Local.shold,"0",16,V.Local.shold)
+	F.Intrinsic.String.Left(V.Local.shold,16,V.Local.shold)
+	V.uglobal.uJobOUPL(V.Local.ix)!OVERLAP.set(V.local.shold)
+	'clear the date
+	v.Local.sformatdate.Set("")
+	v.Local.sformatdate.Set("")
+F.Intrinsic.Control.Next(V.Local.ix)
+
+'loop through the UDT and start building the file
+F.Intrinsic.Control.For(V.Local.ix,V.uGlobal.uJobOUPL.LBound,V.uglobal.uJobOUPL.UBound,1)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJobOUPL(v.Local.ix)!JOB,V.uGlobal.uJobOUPL(v.Local.ix)!SUFFIX,V.uGlobal.uJobOUPL(v.Local.ix)!SEQ,V.uGlobal.uJobOUPL(v.Local.ix)!OPERATION,V.uGlobal.uJobOUPL(v.Local.ix)!FLAG_SET_UP,V.uGlobal.uJobOUPL(v.Local.ix)!LMO,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJobOUPL(v.Local.ix)!DESCRIPTION,V.uGlobal.uJobOUPL(v.Local.ix)!UM,V.uGlobal.uJobOUPL(v.Local.ix)!PWC,V.uGlobal.uJobOUPL(v.Local.ix)!ROUTER,V.uGlobal.uJobOUPL(v.Local.ix)!ROUTER_SEQ,V.uGlobal.uJobOUPL(v.Local.ix)!SETUP,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJobOUPL(v.Local.ix)!RATE_PIECE,V.uGlobal.uJobOUPL(v.Local.ix)!RATE_BURDEN,V.uGlobal.uJobOUPL(v.Local.ix)!HOURS_ESTIMATED,V.uGlobal.uJobOUPL(v.Local.ix)!DATE_START,V.uGlobal.uJobOUPL(v.Local.ix)!DATE_DUE,V.uGlobal.uJobOUPL(v.Local.ix)!DATE_PO_ORDER,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}",V.Local.sWO,V.uGlobal.uJobOUPL(v.Local.ix)!RATE,V.uGlobal.uJobOUPL(v.Local.ix)!CODE_SORT_OPER,V.uGlobal.uJobOUPL(v.Local.ix)!PROJ_GROUP,V.uGlobal.uJobOUPL(v.Local.ix)!TASK_SIGNOFF_USER,V.uGlobal.uJobOUPL(v.Local.ix)!TASK_COMP_REQ,V.uGlobal.uJobOUPL(v.Local.ix)!NO_ROUTER_UPDATE,V.local.sWO)
+	f.Intrinsic.String.Build("{0}{1}{2}",V.Local.sWO,V.uGlobal.uJobOUPL(v.Local.ix)!OVERLAP,V.Ambient.NewLine,V.local.sWO)
+F.Intrinsic.Control.Next(V.Local.ix)
+
+'write the file and call the upload
+F.Intrinsic.Control.If(V.Local.sWO,<>,"")
+	'CREATE THE FILE AND CALL THE UPLOAD
+	f.Intrinsic.String.Build("{0}\JOBCOST.TXT",v.Caller.FilesDir,v.Local.sfiledir)
+	F.Intrinsic.File.String2File(V.Local.sfiledir,V.Local.sWO)
+	F.Global.General.CallWrappersync(50,"UPLJOBST/A/L")
+f.Intrinsic.Control.EndIf
+
+'create WO for all the assembly parts of this work order, call the assembly subroutine
+f.Intrinsic.Control.CallSub(assemblies)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("JOBCOST_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.JOBCOST.End
+
+Program.Sub.Assemblies.Start
+F.Intrinsic.Control.SetErrorHandler("Assemblies_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.ssql.Declare(String)
+v.Local.ix.Declare(long)
+V.Local.sWO.Declare(String)
+V.Local.filename.Declare(String)
+V.Local.sfiledir.Declare(String)
+V.Local.shold.Declare(String)
+v.Local.sorder.Declare(string)
+v.Local.sline.Declare(String)
+v.Local.fpriceperpart.Declare(float)
+v.Local.spartdescsql.Declare(String)
+v.Local.spartdesc.Declare(String)
+v.Local.sret.Declare(string)
+v.Local.sjob.Declare(String)
+v.Local.sformatdate.Declare(String)
+v.Local.dformatdate.Declare(date)
+
+'redim
+V.uGlobal.uJHeader.redim(0,0)
+
+F.intrinsic.control.for(V.Local.ix,0,v.dataTable.JOBCOST.RowCount--,1)
+	'query to see if the part was manuf to job
+	f.Intrinsic.String.Build("SELECT CODE_SOURCE from INVENTORY_MST2 where PART = '{0}'",v.DataTable.JOBCOST(v.Local.ix).PART_WC_OUTSIDE.fieldvaltrim, v.Local.ssql)
+	f.Intrinsic.Control.If(v.ODBC.conx!rst.FieldValTrim!CODE_SOURCE,=,"F")
+		'get the next 
+		F.ODBC.Connection!Conx.GetID("JOB_HEADER","JOB",True,V.Local.sRet)
+		
+		
+		
+'		F.Intrinsic.String.Build("select V_ORDER_LINES.JOB, V_ORDER_LINES.SUFFIX, V_ORDER_LINES.PART, V_ORDER_LINES.LOCATION,V_ORDER_LINES.PRODUCT_LINE, V_ORDER_LINES.PRICE, V_ORDER_LINES.DESCRIPTION, V_ORDER_LINES.CUSTOMER, V_ORDER_LINES.QTY_ORDERED as RUN_QTY, V_ORDER_LINES.DATE_ORDER as DATE_OPENED, V_ORDER_HEADER.DATE_DUE, V_ORDER_HEADER.CUSTOMER_PO, V_ORDER_HEADER.SALESPERSON from V_ORDER_LINES inner join V_ORDER_HEADER on V_ORDER_LINES.ORDER_NO = V_ORDER_HEADER.ORDER_NO where V_ORDER_LINES.ORDER_NO = '{0}' and V_ORDER_LINES.RECORD_NO = '{1}'",V.Local.sorder.Trim,v.Local.sline.Trim,v.Local.sSql)
+'		f.Data.DataTable.CreateFromSQL("ORDER","conx",v.Local.sSql)
+'		F.intrinsic.control.for(V.Local.ix,0,v.dataTable.ORDER.RowCount--,1)
+'			v.uGlobal.uJHeader.RedimPreserve(0,v.Local.ix)
+'		''JOB
+'			F.Intrinsic.String.RPad(v.Local.sret.Trim," ",6,V.Local.shold)
+'			F.Intrinsic.String.Left(V.Local.shold,6,V.Local.shold)
+'			v.Global.sjob.Set(v.DataTable.ORDER(v.Local.ix).PART.fieldvaltrim)
+'			V.uGlobal.uJHeader(V.Local.ix)!JOB.set(V.local.shold)
+
+	f.Intrinsic.Control.Else
+	
+	
+	f.Intrinsic.Control.EndIf
+	
+
+
+F.Intrinsic.Control.Next(V.Local.ix)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Assemblies_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4396_Auto_Print_Subs.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Assemblies.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$WAW$}$2/6/2017 4:37:22 PM$}$False
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This will be a custom GAB script that will run from a custom Menu Item under Bill of Material -> File -> Custom Cobalt BOM Import.  The user will navigate to the xml file that needs to be loaded into Global Shop.  Once the xml is parsed there will be a search in Global Shop to see if a BOM already exists for that Part Number.  If one already exists a compare screen will display showing the differences between the two.  If one does not exist then the screen will display the BOM as it will be uploaded into Global Shop.  Any parts that are listed in the BOM that are not Inventory Parts will be highlighted in Yellow.  If there are any parts not in inventory the user will have the option to click the create Parts button to generate those parts in Global Shop.  If the BOM exists in Global shop then any differences on the new import will be highlighted in Red.  After the Parts have been created then the Upload button will upload and override any previous BOM for that part.
+Program.Sub.Comments.End
